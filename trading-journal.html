@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="交易日志" />
+<title>交易日志</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #F2F2F7;
+  --card: #FFFFFF;
+  --card2: #F9F9FB;
+  --text: #1C1C1E;
+  --text2: #6E6E73;
+  --text3: #AEAEB2;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.12);
+  --accent: #007AFF;
+  --accent-light: rgba(0,122,255,0.10);
+  --green: #34C759;
+  --green-light: rgba(52,199,89,0.12);
+  --red: #FF3B30;
+  --red-light: rgba(255,59,48,0.12);
+  --orange: #FF9500;
+  --orange-light: rgba(255,149,0,0.12);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-xs: 8px;
+  --font: 'DM Sans', -apple-system, sans-serif;
+  --mono: 'DM Mono', monospace;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: calc(80px + var(--safe-bottom));
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Header */
+.header {
+  background: rgba(242,242,247,0.85);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 16px 20px 12px;
+  border-bottom: 0.5px solid var(--border);
+}
+.header-inner { max-width: 480px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+.header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+.header-date { font-size: 13px; color: var(--text2); font-weight: 400; }
+
+/* Bottom nav */
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: 0.5px solid var(--border);
+  padding: 8px 0 calc(8px + var(--safe-bottom));
+  z-index: 100;
+}
+.nav-inner { max-width: 480px; margin: 0 auto; display: flex; }
+.nav-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 4px; cursor: pointer; border: none; background: none; font-family: var(--font);
+  color: var(--text3); transition: color 0.15s;
+}
+.nav-btn.active { color: var(--accent); }
+.nav-icon { font-size: 22px; line-height: 1; }
+.nav-label { font-size: 10px; font-weight: 500; }
+
+/* Content */
+.content { max-width: 480px; margin: 0 auto; padding: 16px 16px 8px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Section */
+.section { margin-bottom: 28px; }
+.section-header { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; padding: 0 4px; }
+
+/* Card */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px var(--border);
+}
+.card-row {
+  display: flex; align-items: center;
+  padding: 13px 16px;
+  border-bottom: 0.5px solid var(--border);
+  gap: 12px;
+}
+.card-row:last-child { border-bottom: none; }
+.card-row label { font-size: 15px; color: var(--text); flex-shrink: 0; min-width: 80px; }
+.card-row input, .card-row select {
+  flex: 1; border: none; background: none; font-size: 15px; color: var(--text);
+  font-family: var(--font); text-align: right; outline: none; min-width: 0;
+  -webkit-appearance: none;
+}
+.card-row input::placeholder { color: var(--text3); }
+.card-row select { color: var(--text2); }
+.card-row select option { color: var(--text); }
+
+/* Textarea row */
+.card-textarea { padding: 13px 16px; border-bottom: 0.5px solid var(--border); }
+.card-textarea:last-child { border-bottom: none; }
+.card-textarea label { display: block; font-size: 13px; color: var(--text2); margin-bottom: 6px; font-weight: 500; }
+.card-textarea textarea {
+  width: 100%; border: none; background: none; font-size: 15px; color: var(--text);
+  font-family: var(--font); resize: none; outline: none; line-height: 1.5;
+  min-height: 72px;
+}
+.card-textarea textarea::placeholder { color: var(--text3); }
+
+/* Direction picker */
+.dir-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.dir-card {
+  background: var(--card); border-radius: var(--radius-sm);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px var(--border);
+  padding: 14px; text-align: center; cursor: pointer;
+  transition: all 0.15s; border: 2px solid transparent;
+}
+.dir-card .dir-icon { font-size: 24px; margin-bottom: 4px; }
+.dir-card .dir-label { font-size: 14px; font-weight: 600; }
+.dir-card .dir-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.dir-card.long-active { background: var(--green-light); border-color: var(--green); }
+.dir-card.long-active .dir-label { color: #1A7A35; }
+.dir-card.short-active { background: var(--red-light); border-color: var(--red); }
+.dir-card.short-active .dir-label { color: #C0392B; }
+
+/* Calc result */
+.calc-result {
+  background: var(--card2);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  box-shadow: 0 0 0 0.5px var(--border);
+  margin-bottom: 0;
+}
+.calc-item { text-align: center; padding: 8px 4px; position: relative; }
+.calc-item + .calc-item::before {
+  content: '';
+  position: absolute; left: 0; top: 20%; bottom: 20%;
+  width: 0.5px; background: var(--border2);
+}
+.calc-val { font-size: 17px; font-weight: 600; font-family: var(--mono); color: var(--text); letter-spacing: -0.5px; }
+.calc-val.green { color: var(--green); }
+.calc-val.red { color: var(--red); }
+.calc-lbl { font-size: 11px; color: var(--text2); margin-top: 3px; font-weight: 500; }
+.calc-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* Result picker */
+.res-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.res-card {
+  background: var(--card); border-radius: var(--radius-sm);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px var(--border);
+  padding: 12px 6px; text-align: center; cursor: pointer;
+  border: 2px solid transparent; transition: all 0.15s;
+}
+.res-card .res-icon { font-size: 20px; }
+.res-card .res-label { font-size: 13px; font-weight: 600; margin-top: 4px; }
+.res-card.win-active { background: var(--green-light); border-color: var(--green); }
+.res-card.win-active .res-label { color: #1A7A35; }
+.res-card.loss-active { background: var(--red-light); border-color: var(--red); }
+.res-card.loss-active .res-label { color: #C0392B; }
+.res-card.flat-active { background: var(--orange-light); border-color: var(--orange); }
+.res-card.flat-active .res-label { color: #A05F00; }
+
+/* Emotion slider */
+.emo-wrap { padding: 13px 16px; }
+.emo-label { font-size: 13px; color: var(--text2); font-weight: 500; margin-bottom: 10px; }
+.emo-slider-row { display: flex; align-items: center; gap: 10px; }
+.emo-slider-row span { font-size: 12px; color: var(--text3); white-space: nowrap; }
+.emo-val { font-size: 17px; font-weight: 600; color: var(--accent); min-width: 24px; text-align: center; }
+input[type=range] {
+  flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
+  background: linear-gradient(to right, var(--accent) 0%, var(--accent) 70%, var(--border2) 70%);
+  border-radius: 2px; outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px;
+  border-radius: 50%; background: white; border: 0.5px solid var(--border2);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Image upload */
+.img-upload {
+  margin: 0 16px 13px;
+  border: 1.5px dashed var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.img-upload:active { border-color: var(--accent); }
+.img-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.img-upload-icon { font-size: 28px; margin-bottom: 6px; }
+.img-upload-text { font-size: 13px; color: var(--text2); }
+.img-upload-sub { font-size: 12px; color: var(--text3); margin-top: 3px; }
+.img-preview { width: 100%; border-radius: var(--radius-xs); display: none; margin-top: 10px; max-height: 200px; object-fit: cover; }
+
+/* Copy button */
+.copy-btn {
+  width: 100%; padding: 15px;
+  background: var(--accent);
+  color: white; border: none; border-radius: var(--radius);
+  font-size: 16px; font-weight: 600; font-family: var(--font);
+  cursor: pointer; margin-top: 8px;
+  box-shadow: 0 2px 8px rgba(0,122,255,0.25);
+  transition: opacity 0.15s, transform 0.1s;
+  letter-spacing: -0.2px;
+}
+.copy-btn:active { opacity: 0.85; transform: scale(0.99); }
+.copy-btn.green-btn { background: var(--green); box-shadow: 0 2px 8px rgba(52,199,89,0.25); }
+
+/* Setup info */
+.setup-info {
+  background: var(--accent-light);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13px; color: var(--accent);
+  margin-bottom: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.stat-card {
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px var(--border);
+}
+.stat-val { font-size: 22px; font-weight: 600; font-family: var(--mono); letter-spacing: -0.5px; }
+.stat-lbl { font-size: 12px; color: var(--text2); margin-top: 3px; }
+.stat-val.green { color: var(--green); }
+.stat-val.red { color: var(--red); }
+
+/* History list */
+.history-item {
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.history-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.history-dot.win { background: var(--green); }
+.history-dot.loss { background: var(--red); }
+.history-dot.flat { background: var(--orange); }
+.history-dot.open { background: var(--accent); }
+.history-info { flex: 1; min-width: 0; }
+.history-top { display: flex; align-items: center; justify-content: space-between; }
+.history-asset { font-size: 15px; font-weight: 600; }
+.history-pnl { font-size: 15px; font-weight: 600; font-family: var(--mono); }
+.history-pnl.green { color: var(--green); }
+.history-pnl.red { color: var(--red); }
+.history-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 3px; }
+.history-date { font-size: 12px; color: var(--text3); }
+.history-dir { font-size: 12px; color: var(--text2); }
+.history-empty { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 15px; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: calc(90px + var(--safe-bottom)); left: 50%; transform: translateX(-50%) translateY(20px);
+  background: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
+  border-radius: 20px; font-size: 14px; font-weight: 500;
+  pointer-events: none; opacity: 0; transition: all 0.3s; white-space: nowrap;
+  z-index: 200;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <h1>交易日志</h1>
+    <span class="header-date" id="header-date"></span>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- TAB: 入场 -->
+  <div class="tab-panel active" id="tab-entry">
+
+    <div class="section">
+      <div class="section-header">方向</div>
+      <div class="dir-group">
+        <div class="dir-card" id="dir-long" onclick="setDir('long')">
+          <div class="dir-icon">↑</div>
+          <div class="dir-label">做多</div>
+          <div class="dir-sub">Long</div>
+        </div>
+        <div class="dir-card" id="dir-short" onclick="setDir('short')">
+          <div class="dir-icon">↓</div>
+          <div class="dir-label">做空</div>
+          <div class="dir-sub">Short</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">品种 & 时间</div>
+      <div class="card">
+        <div class="card-row">
+          <label>品种</label>
+          <select id="e-asset" onchange="calc()">
+            <option value="">选择</option>
+            <option>BTC/USDT</option>
+            <option>ETH/USDT</option>
+            <option>SOL/USDT</option>
+            <option>黄金 XAU/USD</option>
+            <option>纳斯达克 NQ</option>
+            <option>标普500 ES</option>
+            <option>A股</option>
+            <option>其他</option>
+          </select>
+        </div>
+        <div class="card-row">
+          <label>周期</label>
+          <select id="e-tf">
+            <option>4小时</option>
+            <option>日线</option>
+            <option>1小时</option>
+            <option>15分钟</option>
+            <option>周线</option>
+          </select>
+        </div>
+        <div class="card-row">
+          <label>日期</label>
+          <input type="date" id="e-date" />
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">价格计算</div>
+      <div class="card" style="margin-bottom:10px;">
+        <div class="card-row">
+          <label>入场价格</label>
+          <input type="number" id="e-entry" placeholder="e.g. 95000" inputmode="decimal" oninput="calc()" />
+        </div>
+        <div class="card-row">
+          <label>止损距离</label>
+          <input type="number" id="e-sl-pct" placeholder="e.g. 2 (%)" inputmode="decimal" step="0.1" oninput="calc()" />
+        </div>
+        <div class="card-row">
+          <label>盈亏比</label>
+          <input type="number" id="e-rr" placeholder="R:R" inputmode="decimal" step="0.5" oninput="calc()" />
+        </div>
+        <div class="card-row">
+          <label>杠杆</label>
+          <input type="number" id="e-lev" placeholder="倍数" inputmode="decimal" oninput="calc()" />
+        </div>
+        <div class="card-row">
+          <label>风险比例</label>
+          <input type="number" id="e-risk" placeholder="e.g. 2 (%)" inputmode="decimal" step="0.5" oninput="calc()" />
+        </div>
+      </div>
+      <div class="calc-result">
+        <div class="calc-item">
+          <div class="calc-val red" id="c-sl">—</div>
+          <div class="calc-lbl">止损价</div>
+          <div class="calc-sub" id="c-sl-d">—</div>
+        </div>
+        <div class="calc-item">
+          <div class="calc-val green" id="c-tp">—</div>
+          <div class="calc-lbl">目标价</div>
+          <div class="calc-sub" id="c-rr-s">—</div>
+        </div>
+        <div class="calc-item">
+          <div class="calc-val" id="c-pos" style="color:var(--accent)">—</div>
+          <div class="calc-lbl">建议仓位</div>
+          <div class="calc-sub" id="c-risk-a">设置资金</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">入场逻辑</div>
+      <div class="card">
+        <div class="card-textarea">
+          <label>方法 & 形态</label>
+          <textarea id="e-method" placeholder="价格行为、突破回踩、支撑阻力..."></textarea>
+        </div>
+        <div class="card-textarea" style="border-top:0.5px solid var(--border);">
+          <label>触发条件</label>
+          <textarea id="e-trigger" placeholder="为什么现在入场..."></textarea>
+        </div>
+      </div>
+      <div class="card" style="margin-top:10px;">
+        <div class="img-upload">
+          <input type="file" accept="image/*" onchange="previewImg(this,'prev-entry','img-entry-txt')" />
+          <div class="img-upload-icon">📈</div>
+          <div class="img-upload-text" id="img-entry-txt">上传入场截图</div>
+          <div class="img-upload-sub">点击选择或截图后粘贴</div>
+          <img id="prev-entry" class="img-preview" />
+        </div>
+      </div>
+    </div>
+
+    <button class="copy-btn" onclick="saveEntry()">保存入场记录</button>
+
+  </div>
+
+  <!-- TAB: 复盘 -->
+  <div class="tab-panel" id="tab-review">
+
+    <div class="section">
+      <div class="section-header">交易结果</div>
+      <div class="res-group">
+        <div class="res-card" id="rb-win" onclick="setRes('win')">
+          <div class="res-icon">✓</div>
+          <div class="res-label">盈利</div>
+        </div>
+        <div class="res-card" id="rb-loss" onclick="setRes('loss')">
+          <div class="res-icon">✕</div>
+          <div class="res-label">亏损</div>
+        </div>
+        <div class="res-card" id="rb-flat" onclick="setRes('flat')">
+          <div class="res-icon">→</div>
+          <div class="res-label">保本</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">出场数据</div>
+      <div class="card">
+        <div class="card-row">
+          <label>出场价格</label>
+          <input type="number" id="r-exit" placeholder="e.g. 98500" inputmode="decimal" oninput="calcExit()" />
+        </div>
+        <div class="card-row">
+          <label>实际盈亏</label>
+          <input type="text" id="r-pnl" placeholder="自动计算" readonly style="color:var(--text2);" />
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">复盘分析</div>
+      <div class="card">
+        <div class="card-textarea">
+          <label>走势与预期的差异</label>
+          <textarea id="r-diff" placeholder="实际走势和你预期有什么不同..."></textarea>
+        </div>
+        <div class="card-textarea" style="border-top:0.5px solid var(--border);">
+          <label>下次同类情况我会怎么做？</label>
+          <textarea id="r-lesson" placeholder="这次最重要的一个教训..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">情绪评分</div>
+      <div class="card">
+        <div class="emo-wrap">
+          <div class="emo-label">交易时的情绪状态</div>
+          <div class="emo-slider-row">
+            <span>情绪化</span>
+            <input type="range" min="0" max="10" value="7" id="r-emo" step="1" oninput="updateEmo(this.value)" />
+            <span>冷静</span>
+            <span class="emo-val" id="emo-out">7</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">出场截图</div>
+      <div class="card">
+        <div class="img-upload">
+          <input type="file" accept="image/*" onchange="previewImg(this,'prev-review','img-review-txt')" />
+          <div class="img-upload-icon">📉</div>
+          <div class="img-upload-text" id="img-review-txt">上传出场截图</div>
+          <div class="img-upload-sub">点击选择或截图后粘贴</div>
+          <img id="prev-review" class="img-preview" />
+        </div>
+      </div>
+    </div>
+
+    <button class="copy-btn green-btn" onclick="saveReview()">保存复盘记录</button>
+
+  </div>
+
+  <!-- TAB: 历史 -->
+  <div class="tab-panel" id="tab-history">
+    <div class="stats-grid" id="stats-grid"></div>
+    <div id="history-list"></div>
+  </div>
+
+  <!-- TAB: 设置 -->
+  <div class="tab-panel" id="tab-settings">
+
+    <div class="setup-info">在这里设置一次，入场计算自动套用，无需每次手填。</div>
+
+    <div class="section">
+      <div class="section-header">账户</div>
+      <div class="card">
+        <div class="card-row">
+          <label>总资金</label>
+          <input type="number" id="s-capital" placeholder="e.g. 10000 USDT" inputmode="decimal" oninput="saveSettings()" />
+        </div>
+        <div class="card-row">
+          <label>单笔风险</label>
+          <input type="number" id="s-risk" placeholder="e.g. 2 (%)" inputmode="decimal" step="0.5" oninput="saveSettings()" />
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">默认参数</div>
+      <div class="card">
+        <div class="card-row">
+          <label>默认盈亏比</label>
+          <input type="number" id="s-rr" placeholder="e.g. 2" inputmode="decimal" step="0.5" oninput="saveSettings()" />
+        </div>
+        <div class="card-row">
+          <label>默认杠杆</label>
+          <input type="number" id="s-lev" placeholder="e.g. 10" inputmode="decimal" oninput="saveSettings()" />
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">数据</div>
+      <div class="card">
+        <div class="card-row" onclick="exportData()" style="cursor:pointer;">
+          <label>导出记录</label>
+          <span style="color:var(--accent);font-size:15px;">导出 JSON →</span>
+        </div>
+        <div class="card-row" onclick="clearData()" style="cursor:pointer;">
+          <label style="color:var(--red);">清除所有记录</label>
+          <span style="color:var(--red);font-size:15px;">清除 →</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<nav class="nav">
+  <div class="nav-inner">
+    <button class="nav-btn active" id="nav-entry" onclick="switchTab('entry',this)">
+      <span class="nav-icon">✦</span>
+      <span class="nav-label">入场</span>
+    </button>
+    <button class="nav-btn" id="nav-review" onclick="switchTab('review',this)">
+      <span class="nav-icon">◎</span>
+      <span class="nav-label">复盘</span>
+    </button>
+    <button class="nav-btn" id="nav-history" onclick="switchTab('history',this);renderHistory()">
+      <span class="nav-icon">▤</span>
+      <span class="nav-label">历史</span>
+    </button>
+    <button class="nav-btn" id="nav-settings" onclick="switchTab('settings',this)">
+      <span class="nav-icon">⊙</span>
+      <span class="nav-label">设置</span>
+    </button>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let dirState = '';
+let resState = '';
+
+function init() {
+  const today = new Date();
+  document.getElementById('header-date').textContent = today.toLocaleDateString('zh-CN', {month:'long',day:'numeric',weekday:'short'});
+  document.getElementById('e-date').value = today.toISOString().split('T')[0];
+  loadSettings();
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+}
+
+function setDir(d) {
+  dirState = d;
+  document.getElementById('dir-long').className = 'dir-card' + (d === 'long' ? ' long-active' : '');
+  document.getElementById('dir-short').className = 'dir-card' + (d === 'short' ? ' short-active' : '');
+  calc();
+}
+
+function setRes(r) {
+  resState = r;
+  ['win','loss','flat'].forEach(x => {
+    document.getElementById('rb-' + x).className = 'res-card';
+  });
+  document.getElementById('rb-' + r).className = 'res-card ' + r + '-active';
+}
+
+function updateEmo(v) {
+  document.getElementById('emo-out').textContent = v;
+  const pct = v / 10 * 100;
+  document.getElementById('r-emo').style.background =
+    `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, var(--border2) ${pct}%)`;
+}
+
+function calc() {
+  const entry = parseFloat(document.getElementById('e-entry').value);
+  const slPct = parseFloat(document.getElementById('e-sl-pct').value);
+  const rr = parseFloat(document.getElementById('e-rr').value) || 2;
+  const lev = parseFloat(document.getElementById('e-lev').value) || 10;
+  const riskPct = parseFloat(document.getElementById('e-risk').value) || 2;
+  const capital = parseFloat(document.getElementById('s-capital').value) || 0;
+  const isShort = dirState === 'short';
+
+  if (!entry || !slPct) {
+    ['c-sl','c-tp','c-pos'].forEach(id => document.getElementById(id).textContent = '—');
+    document.getElementById('c-sl-d').textContent = '—';
+    document.getElementById('c-rr-s').textContent = '—';
+    document.getElementById('c-risk-a').textContent = capital ? '设置止损' : '设置资金';
+    return;
+  }
+
+  const slPrice = isShort ? entry * (1 + slPct / 100) : entry * (1 - slPct / 100);
+  const tpPrice = isShort ? entry * (1 - slPct / 100 * rr) : entry * (1 + slPct / 100 * rr);
+
+  document.getElementById('c-sl').textContent = slPrice >= 1000 ? slPrice.toFixed(0) : slPrice.toFixed(4);
+  document.getElementById('c-tp').textContent = tpPrice >= 1000 ? tpPrice.toFixed(0) : tpPrice.toFixed(4);
+  document.getElementById('c-sl-d').textContent = (isShort ? '+' : '-') + slPct + '%';
+  document.getElementById('c-rr-s').textContent = '1 : ' + rr;
+
+  if (capital > 0) {
+    const riskAmt = capital * riskPct / 100;
+    const posVal = riskAmt / (slPct / 100);
+    const posSize = posVal * lev / entry;
+    document.getElementById('c-pos').textContent = posSize >= 1 ? posSize.toFixed(2) : posSize.toFixed(4);
+    document.getElementById('c-risk-a').textContent = '最大亏 ' + riskAmt.toFixed(0);
+  } else {
+    document.getElementById('c-pos').textContent = '—';
+    document.getElementById('c-risk-a').textContent = '请设置资金';
+  }
+}
+
+function calcExit() {
+  const entry = parseFloat(document.getElementById('e-entry').value);
+  const exit = parseFloat(document.getElementById('r-exit').value);
+  const slPct = parseFloat(document.getElementById('e-sl-pct').value) || 1;
+  if (!entry || !exit) return;
+  const isShort = dirState === 'short';
+  const pnlPct = isShort ? (entry - exit) / entry * 100 : (exit - entry) / entry * 100;
+  const rActual = (pnlPct / slPct).toFixed(2);
+  document.getElementById('r-pnl').value = pnlPct.toFixed(2) + '% (' + rActual + 'R)';
+}
+
+function previewImg(input, imgId, txtId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById(imgId);
+    img.src = e.target.result;
+    img.style.display = 'block';
+    document.getElementById(txtId).textContent = '点击更换截图';
+  };
+  reader.readAsDataURL(file);
+}
+
+document.addEventListener('paste', e => {
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf('image') !== -1) {
+      const file = items[i].getAsFile();
+      const reader = new FileReader();
+      const isReview = document.getElementById('tab-review').classList.contains('active');
+      const imgId = isReview ? 'prev-review' : 'prev-entry';
+      const txtId = isReview ? 'img-review-txt' : 'img-entry-txt';
+      reader.onload = ev => {
+        const img = document.getElementById(imgId);
+        img.src = ev.target.result;
+        img.style.display = 'block';
+        document.getElementById(txtId).textContent = '点击更换截图';
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+});
+
+function getVal(id) { return document.getElementById(id).value || ''; }
+
+function saveEntry() {
+  if (!getVal('e-asset')) { showToast('请选择交易品种'); return; }
+  if (!dirState) { showToast('请选择做多或做空'); return; }
+  if (!getVal('e-entry')) { showToast('请填写入场价格'); return; }
+
+  const records = getRecords();
+  const id = Date.now();
+  const record = {
+    id,
+    date: getVal('e-date'),
+    asset: getVal('e-asset'),
+    tf: getVal('e-tf'),
+    dir: dirState,
+    entry: getVal('e-entry'),
+    sl: document.getElementById('c-sl').textContent,
+    tp: document.getElementById('c-tp').textContent,
+    pos: document.getElementById('c-pos').textContent,
+    slPct: getVal('e-sl-pct'),
+    rr: getVal('e-rr'),
+    lev: getVal('e-lev'),
+    method: getVal('e-method'),
+    trigger: getVal('e-trigger'),
+    status: 'open',
+    result: '',
+    exit: '',
+    pnl: '',
+    diff: '',
+    lesson: '',
+    emo: '',
+    savedAt: new Date().toISOString()
+  };
+  records.unshift(record);
+  saveRecords(records);
+
+  // copy text
+  const dirTxt = dirState === 'long' ? '做多' : '做空';
+  const text = `【入场记录】${record.date}
+品种：${record.asset}　方向：${dirTxt}　周期：${record.tf}
+入场：${record.entry}　止损：${record.sl}　目标：${record.tp}
+仓位：${record.pos}
+方法：${record.method || '—'}
+触发：${record.trigger || '—'}`;
+  copyText(text);
+  showToast('已保存并复制 ✓');
+}
+
+function saveReview() {
+  const records = getRecords();
+  if (!records.length) { showToast('请先记录入场'); return; }
+  const latest = records[0];
+
+  latest.result = resState;
+  latest.exit = getVal('r-exit');
+  latest.pnl = getVal('r-pnl');
+  latest.diff = getVal('r-diff');
+  latest.lesson = getVal('r-lesson');
+  latest.emo = document.getElementById('r-emo').value;
+  latest.status = resState || 'open';
+  saveRecords(records);
+
+  const dirTxt = latest.dir === 'long' ? '做多' : '做空';
+  const resMap = { win: '盈利', loss: '亏损', flat: '保本/小亏' };
+  const text = `【完整交易记录】${latest.date}
+品种：${latest.asset}　方向：${dirTxt}　周期：${latest.tf}
+入场：${latest.entry}　止损：${latest.sl}　目标：${latest.tp}
+─────
+结果：${resMap[resState] || '—'}
+出场：${latest.exit || '—'}　盈亏：${latest.pnl || '—'}
+差异：${latest.diff || '—'}
+下次：${latest.lesson || '—'}
+情绪：${latest.emo}/10`;
+  copyText(text);
+  showToast('复盘已保存并复制 ✓');
+}
+
+function renderHistory() {
+  const records = getRecords();
+  const grid = document.getElementById('stats-grid');
+  const list = document.getElementById('history-list');
+
+  const total = records.length;
+  const wins = records.filter(r => r.result === 'win').length;
+  const losses = records.filter(r => r.result === 'loss').length;
+  const winRate = total ? Math.round(wins / (wins + losses) * 100) || 0 : 0;
+
+  grid.innerHTML = `
+    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">总交易次数</div></div>
+    <div class="stat-card"><div class="stat-val ${winRate >= 50 ? 'green' : 'red'}">${winRate}%</div><div class="stat-lbl">胜率</div></div>
+    <div class="stat-card"><div class="stat-val green">${wins}</div><div class="stat-lbl">盈利次数</div></div>
+    <div class="stat-card"><div class="stat-val red">${losses}</div><div class="stat-lbl">亏损次数</div></div>
+  `;
+
+  if (!records.length) {
+    list.innerHTML = '<div class="history-empty">还没有交易记录<br>从入场开始记录吧</div>';
+    return;
+  }
+
+  const colorMap = { win: 'win', loss: 'loss', flat: 'flat', open: 'open' };
+  const resMap = { win: '盈利', loss: '亏损', flat: '保本', open: '持仓中', '': '持仓中' };
+  const dirMap = { long: '做多 ↑', short: '做空 ↓' };
+
+  list.innerHTML = records.map(r => `
+    <div class="history-item">
+      <div class="history-dot ${colorMap[r.status] || 'open'}"></div>
+      <div class="history-info">
+        <div class="history-top">
+          <span class="history-asset">${r.asset || '—'}</span>
+          <span class="history-pnl ${r.result === 'win' ? 'green' : r.result === 'loss' ? 'red' : ''}">${r.pnl || resMap[r.status]}</span>
+        </div>
+        <div class="history-bottom">
+          <span class="history-date">${r.date}</span>
+          <span class="history-dir">${dirMap[r.dir] || '—'} · ${r.tf || ''}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem('tj_settings') || '{}');
+    if (s.capital) document.getElementById('s-capital').value = s.capital;
+    if (s.risk) document.getElementById('s-risk').value = s.risk;
+    if (s.rr) document.getElementById('s-rr').value = s.rr;
+    if (s.lev) document.getElementById('s-lev').value = s.lev;
+    document.getElementById('e-rr').value = s.rr || 2;
+    document.getElementById('e-lev').value = s.lev || 10;
+    document.getElementById('e-risk').value = s.risk || 2;
+  } catch(e) {}
+}
+
+function saveSettings() {
+  try {
+    const s = {
+      capital: document.getElementById('s-capital').value,
+      risk: document.getElementById('s-risk').value,
+      rr: document.getElementById('s-rr').value,
+      lev: document.getElementById('s-lev').value
+    };
+    localStorage.setItem('tj_settings', JSON.stringify(s));
+    document.getElementById('e-rr').value = s.rr;
+    document.getElementById('e-lev').value = s.lev;
+    document.getElementById('e-risk').value = s.risk;
+    calc();
+  } catch(e) {}
+}
+
+function getRecords() {
+  try { return JSON.parse(localStorage.getItem('tj_records') || '[]'); } catch(e) { return []; }
+}
+function saveRecords(r) {
+  try { localStorage.setItem('tj_records', JSON.stringify(r)); } catch(e) {}
+}
+
+function exportData() {
+  const records = getRecords();
+  const text = records.map(r => {
+    const dirTxt = r.dir === 'long' ? '做多' : '做空';
+    const resMap = { win: '盈利', loss: '亏损', flat: '保本', open: '持仓中', '': '持仓中' };
+    return `【${r.date}】${r.asset} ${dirTxt}
+入场：${r.entry}　止损：${r.sl}　目标：${r.tp}
+结果：${resMap[r.status]}　出场：${r.exit || '—'}　盈亏：${r.pnl || '—'}
+方法：${r.method || '—'}
+触发：${r.trigger || '—'}
+差异：${r.diff || '—'}
+下次：${r.lesson || '—'}
+情绪：${r.emo || '—'}/10
+`;
+  }).join('\n---\n\n');
+  copyText(text || '暂无记录');
+  showToast('已复制全部记录');
+}
+
+function clearData() {
+  if (confirm('确定要清除所有交易记录吗？此操作不可恢复。')) {
+    localStorage.removeItem('tj_records');
+    renderHistory();
+    showToast('已清除');
+  }
+}
+
+function copyText(text) {
+  try {
+    navigator.clipboard.writeText(text);
+  } catch(e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+init();
+</script>
+</body>
+</html>
