@@ -6,6 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="交易日志"/>
+<meta name="theme-color" content="#F2F2F7"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
 <title>交易日志</title>
 <style>
 :root{
@@ -17,103 +20,298 @@
   --red:#FF3B30;--rl:rgba(255,59,48,.12);
   --orange:#FF9500;--ol:rgba(255,149,0,.12);
   --r:14px;--rs:10px;--rx:8px;
-  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
-  --mono:'SF Mono',SFMono-Regular,monospace;
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',sans-serif;
+  --mono:'SF Mono',SFMono-Regular,ui-monospace,monospace;
   --sb:env(safe-area-inset-bottom,0px);
+  --st:env(safe-area-inset-top,0px);
 }
+
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:var(--font);background:var(--bg);color:var(--t);min-height:100vh;padding-bottom:calc(80px + var(--sb));-webkit-font-smoothing:antialiased}
-.hdr{background:rgba(242,242,247,.9);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);position:sticky;top:0;z-index:100;padding:16px 20px 12px;border-bottom:.5px solid var(--b)}
+
+body{
+  font-family:var(--font);background:var(--bg);color:var(--t);
+  min-height:100vh;padding-bottom:calc(84px + var(--sb));
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  overscroll-behavior:none;
+}
+
+/* Splash screen */
+#splash{
+  position:fixed;inset:0;background:var(--accent);z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  transition:opacity .4s ease,transform .4s ease;
+}
+#splash.hide{opacity:0;transform:scale(1.05);pointer-events:none}
+#splash-icon{width:80px;height:80px;background:white;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 8px 32px rgba(0,0,0,.2);animation:splashPop .5s cubic-bezier(.34,1.56,.64,1) both}
+#splash h1{color:white;font-size:22px;font-weight:700;letter-spacing:-.3px;opacity:0;animation:fadeUp .4s .2s ease both}
+#splash p{color:rgba(255,255,255,.7);font-size:14px;opacity:0;animation:fadeUp .4s .3s ease both}
+
+@keyframes splashPop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes fadeUp{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* Header */
+.hdr{
+  background:rgba(242,242,247,.85);
+  backdrop-filter:saturate(180%) blur(24px);
+  -webkit-backdrop-filter:saturate(180%) blur(24px);
+  position:sticky;top:0;z-index:100;
+  padding:calc(12px + var(--st)) 20px 12px;
+  border-bottom:.5px solid var(--b);
+}
 .hdr-in{max-width:480px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
-.hdr h1{font-size:20px;font-weight:600;letter-spacing:-.3px}
-.hdr-date{font-size:13px;color:var(--t2)}
-.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid var(--b);padding:8px 0 calc(8px + var(--sb));z-index:100}
+.hdr h1{font-size:20px;font-weight:700;letter-spacing:-.5px}
+.hdr-date{font-size:13px;color:var(--t2);font-weight:400}
+
+/* Nav */
+.nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(255,255,255,.88);
+  backdrop-filter:saturate(180%) blur(24px);
+  -webkit-backdrop-filter:saturate(180%) blur(24px);
+  border-top:.5px solid var(--b);
+  padding:6px 0 calc(6px + var(--sb));z-index:100;
+}
 .nav-in{max-width:480px;margin:0 auto;display:flex}
-.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:pointer;border:none;background:none;font-family:var(--font);color:var(--t3);transition:color .15s}
+.nb{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:6px 4px;cursor:pointer;border:none;background:none;
+  font-family:var(--font);color:var(--t3);
+  transition:color .2s ease;position:relative;
+}
 .nb.active{color:var(--accent)}
-.ni{font-size:22px;line-height:1}.nl{font-size:10px;font-weight:500}
+.nb-icon-wrap{
+  width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  transition:background .2s ease,transform .15s cubic-bezier(.34,1.56,.64,1);
+}
+.nb.active .nb-icon-wrap{background:var(--al);transform:scale(1.1)}
+.ni{font-size:20px;line-height:1}
+.nl{font-size:10px;font-weight:500;letter-spacing:-.2px}
+
+/* Content */
 .wrap{max-width:480px;margin:0 auto;padding:16px 16px 8px}
-.tab{display:none}.tab.active{display:block}
+.tab{display:none;animation:tabIn .25s cubic-bezier(.4,0,.2,1) both}
+.tab.active{display:block}
+@keyframes tabIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
 .sec{margin-bottom:24px}
 .sec-h{font-size:12px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding:0 4px}
-.card{background:var(--card);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06),0 0 0 .5px var(--b)}
-.cr{display:flex;align-items:center;padding:13px 16px;border-bottom:.5px solid var(--b);gap:12px}
+
+/* Card */
+.card{
+  background:var(--card);border-radius:var(--r);overflow:hidden;
+  box-shadow:0 1px 0 var(--b),0 0 0 .5px var(--b);
+  transition:box-shadow .15s ease;
+}
+.cr{display:flex;align-items:center;padding:13px 16px;border-bottom:.5px solid var(--b);gap:12px;transition:background .1s ease}
 .cr:last-child{border-bottom:none}
+.cr:active{background:rgba(0,0,0,.03)}
 .cr label{font-size:15px;color:var(--t);flex-shrink:0;min-width:80px}
-.cr input,.cr select{flex:1;border:none;background:none;font-size:15px;color:var(--t);font-family:var(--font);text-align:right;outline:none;min-width:0;-webkit-appearance:none}
+.cr input,.cr select{flex:1;border:none;background:none;font-size:15px;color:var(--t);font-family:var(--font);text-align:right;outline:none;min-width:0;-webkit-appearance:none;transition:color .15s}
+.cr input:focus{color:var(--accent)}
 .cr input::placeholder{color:var(--t3)}
 .cr select{color:var(--t2)}
 .ct{padding:13px 16px;border-bottom:.5px solid var(--b)}
 .ct:last-child{border-bottom:none}
-.ct label{display:block;font-size:13px;color:var(--t2);margin-bottom:6px;font-weight:500}
-.ct textarea{width:100%;border:none;background:none;font-size:15px;color:var(--t);font-family:var(--font);resize:none;outline:none;line-height:1.5;min-height:48px}
+.ct label{display:block;font-size:13px;color:var(--t2);margin-bottom:8px;font-weight:500}
+.ct textarea{width:100%;border:none;background:none;font-size:15px;color:var(--t);font-family:var(--font);resize:none;outline:none;line-height:1.55;min-height:44px;transition:min-height .2s ease}
+.ct textarea:focus{min-height:72px}
 .ct textarea::placeholder{color:var(--t3)}
-.tag-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
-.tag{padding:5px 12px;border-radius:20px;font-size:13px;cursor:pointer;border:.5px solid var(--b2);background:var(--bg);color:var(--t2);transition:all .15s;white-space:nowrap;-webkit-user-select:none;user-select:none}
-.tag.sel{background:var(--al);border-color:var(--accent);color:var(--accent);font-weight:500}
+
+/* Tags */
+.tag-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tag{
+  padding:5px 12px;border-radius:20px;font-size:13px;cursor:pointer;
+  border:.5px solid var(--b2);background:var(--bg);color:var(--t2);
+  transition:all .18s cubic-bezier(.4,0,.2,1);
+  -webkit-user-select:none;user-select:none;white-space:nowrap;
+  transform:scale(1);
+}
+.tag:active{transform:scale(.93)}
+.tag.sel{
+  background:var(--al);border-color:var(--accent);color:var(--accent);font-weight:600;
+  transform:scale(1.04);
+}
+
+/* Direction */
 .dir-g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.dc{background:var(--card);border-radius:var(--rs);box-shadow:0 1px 3px rgba(0,0,0,.06),0 0 0 .5px var(--b);padding:14px;text-align:center;cursor:pointer;transition:all .15s;border:2px solid transparent}
-.dc .di{font-size:24px;margin-bottom:4px}.dc .dl{font-size:14px;font-weight:600}.dc .ds{font-size:12px;color:var(--t2);margin-top:2px}
-.dc.la{background:var(--gl);border-color:var(--green)}.dc.la .dl{color:#1A7A35}
-.dc.sa{background:var(--rl);border-color:var(--red)}.dc.sa .dl{color:#C0392B}
-.calc-box{background:var(--card2);border-radius:var(--r);padding:16px;display:grid;grid-template-columns:1fr 1fr 1fr;box-shadow:0 0 0 .5px var(--b)}
-.ci{text-align:center;padding:8px 4px;position:relative}
-.ci+.ci::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:.5px;background:var(--b2)}
-.cv{font-size:17px;font-weight:600;font-family:var(--mono);color:var(--t);letter-spacing:-.5px}
+.dc{
+  background:var(--card);border-radius:var(--rs);
+  box-shadow:0 1px 0 var(--b),0 0 0 .5px var(--b);
+  padding:16px;text-align:center;cursor:pointer;
+  transition:all .2s cubic-bezier(.4,0,.2,1);border:2px solid transparent;
+}
+.dc:active{transform:scale(.96)}
+.dc .di{font-size:26px;margin-bottom:5px;transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.dc .dl{font-size:14px;font-weight:600}
+.dc .ds{font-size:12px;color:var(--t2);margin-top:2px}
+.dc.la{background:var(--gl);border-color:var(--green);box-shadow:0 0 0 .5px var(--green)}
+.dc.la .dl{color:#1A7A35}
+.dc.la .di{transform:translateY(-2px) scale(1.15)}
+.dc.sa{background:var(--rl);border-color:var(--red);box-shadow:0 0 0 .5px var(--red)}
+.dc.sa .dl{color:#C0392B}
+.dc.sa .di{transform:translateY(2px) scale(1.15)}
+
+/* Calc */
+.calc-box{
+  background:var(--card2);border-radius:var(--r);padding:18px 12px;
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  box-shadow:0 0 0 .5px var(--b);margin-top:10px;
+}
+.ci{text-align:center;padding:6px 4px;position:relative}
+.ci+.ci::before{content:'';position:absolute;left:0;top:15%;bottom:15%;width:.5px;background:var(--b2)}
+.cv{
+  font-size:18px;font-weight:700;font-family:var(--mono);
+  color:var(--t);letter-spacing:-.5px;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+}
 .cv.g{color:var(--green)}.cv.r{color:var(--red)}.cv.a{color:var(--accent)}
-.cl{font-size:11px;color:var(--t2);margin-top:3px;font-weight:500}
-.cs{font-size:11px;color:var(--t3);margin-top:2px}
-.warn{display:none;margin-top:8px;background:var(--rl);border:1px solid var(--red);border-radius:var(--rs);padding:10px 14px;font-size:13px;color:#C0392B;font-weight:500;line-height:1.6}
-.info-box{display:none;margin-top:8px;background:var(--al);border:1px solid var(--accent);border-radius:var(--rs);padding:10px 14px;font-size:13px;color:var(--accent);line-height:1.6}
+.cl{font-size:11px;color:var(--t2);margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:.03em}
+.cs{font-size:11px;color:var(--t3);margin-top:2px;min-height:14px}
+
+/* Warn / Info */
+.warn,.info-box{
+  display:none;margin-top:8px;border-radius:var(--rs);
+  padding:11px 14px;font-size:13px;font-weight:500;line-height:1.55;
+  animation:alertIn .25s cubic-bezier(.4,0,.2,1);
+}
+@keyframes alertIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.warn{background:var(--rl);border:1px solid rgba(255,59,48,.3);color:#C0392B}
+.info-box{background:var(--al);border:1px solid rgba(0,122,255,.25);color:var(--accent)}
+
+/* Result */
 .res-g{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.rc{background:var(--card);border-radius:var(--rs);box-shadow:0 1px 3px rgba(0,0,0,.06),0 0 0 .5px var(--b);padding:12px 6px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all .15s}
-.rc .ri{font-size:20px}.rc .rl{font-size:13px;font-weight:600;margin-top:4px}
+.rc{
+  background:var(--card);border-radius:var(--rs);
+  box-shadow:0 1px 0 var(--b),0 0 0 .5px var(--b);
+  padding:14px 6px;text-align:center;cursor:pointer;
+  border:2px solid transparent;
+  transition:all .2s cubic-bezier(.4,0,.2,1);
+}
+.rc:active{transform:scale(.94)}
+.rc .ri{font-size:22px;transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.rc .rl{font-size:13px;font-weight:600;margin-top:5px}
 .rc.wa{background:var(--gl);border-color:var(--green)}.rc.wa .rl{color:#1A7A35}
+.rc.wa .ri{transform:scale(1.2)}
 .rc.la2{background:var(--rl);border-color:var(--red)}.rc.la2 .rl{color:#C0392B}
+.rc.la2 .ri{transform:scale(1.2)}
 .rc.fa{background:var(--ol);border-color:var(--orange)}.rc.fa .rl{color:#A05F00}
-.emo-w{padding:13px 16px}
-.emo-l{font-size:13px;color:var(--t2);font-weight:500;margin-bottom:10px}
+.rc.fa .ri{transform:scale(1.2)}
+
+/* Emotion */
+.emo-w{padding:14px 16px}
+.emo-l{font-size:13px;color:var(--t2);font-weight:500;margin-bottom:12px}
 .emo-r{display:flex;align-items:center;gap:10px}
 .emo-r span{font-size:12px;color:var(--t3);white-space:nowrap}
-.emo-v{font-size:17px;font-weight:600;color:var(--accent);min-width:24px;text-align:center}
-input[type=range]{flex:1;height:4px;-webkit-appearance:none;appearance:none;background:linear-gradient(to right,var(--accent) 0%,var(--accent) 70%,var(--b2) 70%);border-radius:2px;outline:none}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:white;border:.5px solid var(--b2);box-shadow:0 2px 6px rgba(0,0,0,.15)}
-.img-up{margin:0 16px 13px;border:1.5px dashed var(--b2);border-radius:var(--rs);padding:20px;text-align:center;cursor:pointer;position:relative;overflow:hidden}
+.emo-v{font-size:18px;font-weight:700;color:var(--accent);min-width:28px;text-align:center;font-family:var(--mono);transition:all .15s ease}
+input[type=range]{
+  flex:1;height:4px;-webkit-appearance:none;appearance:none;
+  background:linear-gradient(to right,var(--accent) 0%,var(--accent) 70%,var(--b2) 70%);
+  border-radius:2px;outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:24px;height:24px;border-radius:50%;
+  background:white;border:.5px solid var(--b2);
+  box-shadow:0 2px 8px rgba(0,0,0,.18);
+  transition:transform .15s cubic-bezier(.34,1.56,.64,1);
+}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2)}
+
+/* Image */
+.img-up{
+  margin:0 16px 13px;border:1.5px dashed var(--b2);border-radius:var(--rs);
+  padding:22px;text-align:center;cursor:pointer;position:relative;overflow:hidden;
+  transition:border-color .2s ease,background .2s ease;
+}
+.img-up:active{background:rgba(0,122,255,.04);border-color:var(--accent)}
 .img-up input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.img-up-icon{font-size:28px;margin-bottom:6px}
-.img-up-txt{font-size:13px;color:var(--t2)}
+.img-up-icon{font-size:30px;margin-bottom:6px}
+.img-up-txt{font-size:13px;color:var(--t2);font-weight:500}
 .img-up-sub{font-size:12px;color:var(--t3);margin-top:3px}
-.img-prev{width:100%;border-radius:var(--rx);display:none;margin-top:10px;max-height:200px;object-fit:cover}
-.btn{width:100%;padding:15px;background:var(--accent);color:white;border:none;border-radius:var(--r);font-size:16px;font-weight:600;font-family:var(--font);cursor:pointer;margin-top:8px;box-shadow:0 2px 8px rgba(0,122,255,.25);transition:opacity .15s,transform .1s;letter-spacing:-.2px}
-.btn:active{opacity:.85;transform:scale(.99)}
-.btn.green{background:var(--green);box-shadow:0 2px 8px rgba(52,199,89,.25)}
+.img-prev{width:100%;border-radius:var(--rx);display:none;margin-top:10px;max-height:200px;object-fit:cover;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* Buttons */
+.btn{
+  width:100%;padding:16px;border:none;border-radius:var(--r);
+  font-size:17px;font-weight:600;font-family:var(--font);cursor:pointer;
+  margin-top:10px;letter-spacing:-.2px;position:relative;overflow:hidden;
+  transition:transform .15s cubic-bezier(.4,0,.2,1),box-shadow .15s ease,opacity .15s;
+}
+.btn:active{transform:scale(.97);opacity:.9}
+.btn-blue{background:var(--accent);color:white;box-shadow:0 4px 16px rgba(0,122,255,.3)}
+.btn-green{background:var(--green);color:white;box-shadow:0 4px 16px rgba(52,199,89,.3)}
+
+/* Stats */
 .stats-g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.stat-c{background:var(--card);border-radius:var(--rs);padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 0 0 .5px var(--b)}
-.sv{font-size:22px;font-weight:600;font-family:var(--mono);letter-spacing:-.5px}
-.sl{font-size:12px;color:var(--t2);margin-top:3px}
-.sd{font-size:11px;color:var(--t3);margin-top:2px;line-height:1.4}
+.stat-c{
+  background:var(--card);border-radius:var(--rs);padding:14px 16px;
+  box-shadow:0 1px 0 var(--b),0 0 0 .5px var(--b);
+  animation:cardIn .3s cubic-bezier(.4,0,.2,1) both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.sv{font-size:24px;font-weight:700;font-family:var(--mono);letter-spacing:-.5px}
+.sl{font-size:12px;color:var(--t2);margin-top:4px;font-weight:500}
+.sd{font-size:11px;color:var(--t3);margin-top:3px;line-height:1.4}
 .sv.g{color:var(--green)}.sv.r{color:var(--red)}
-.hi{background:var(--card);border-radius:var(--rs);padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 0 0 .5px var(--b);display:flex;align-items:center;gap:12px;cursor:pointer}
-.hi-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.hi-dot.win{background:var(--green)}.hi-dot.loss{background:var(--red)}.hi-dot.flat{background:var(--orange)}.hi-dot.open{background:var(--accent)}
+
+/* History */
+.hi{
+  background:var(--card);border-radius:var(--rs);padding:14px 16px;margin-bottom:8px;
+  box-shadow:0 1px 0 var(--b),0 0 0 .5px var(--b);
+  display:flex;align-items:center;gap:12px;cursor:pointer;
+  transition:transform .15s ease,box-shadow .15s ease,background .1s ease;
+  animation:cardIn .3s cubic-bezier(.4,0,.2,1) both;
+}
+.hi:active{transform:scale(.98);background:rgba(0,0,0,.02)}
+.hi-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.hi:active .hi-dot{transform:scale(1.4)}
+.hi-dot.win{background:var(--green)}.hi-dot.loss{background:var(--red)}
+.hi-dot.flat{background:var(--orange)}.hi-dot.open{background:var(--accent)}
 .hi-info{flex:1;min-width:0}
 .hi-top{display:flex;align-items:center;justify-content:space-between}
 .hi-asset{font-size:15px;font-weight:600}
-.hi-pnl{font-size:15px;font-weight:600;font-family:var(--mono)}
+.hi-pnl{font-size:15px;font-weight:700;font-family:var(--mono)}
 .hi-pnl.g{color:var(--green)}.hi-pnl.r{color:var(--red)}
 .hi-bot{display:flex;align-items:center;justify-content:space-between;margin-top:3px}
 .hi-date{font-size:12px;color:var(--t3)}.hi-dir{font-size:12px;color:var(--t2)}
-.empty{text-align:center;padding:40px 20px;color:var(--t3);font-size:15px}
-.toast{position:fixed;bottom:calc(90px + var(--sb));left:50%;transform:translateX(-50%) translateY(20px);background:rgba(0,0,0,.8);color:white;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:500;pointer-events:none;opacity:0;transition:all .3s;z-index:200;max-width:90vw;text-align:center;white-space:pre-line}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;padding:48px 20px;color:var(--t3);font-size:15px;line-height:1.6}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:calc(94px + var(--sb));left:50%;
+  transform:translateX(-50%) translateY(12px) scale(.95);
+  background:rgba(30,30,30,.92);color:white;
+  padding:11px 22px;border-radius:22px;font-size:14px;font-weight:500;
+  pointer-events:none;opacity:0;
+  transition:all .3s cubic-bezier(.34,1.2,.64,1);
+  z-index:200;max-width:88vw;text-align:center;white-space:pre-line;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+
+/* Misc */
 .info-hint{background:var(--al);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:var(--accent);margin-bottom:16px;font-weight:500;line-height:1.5}
-.pending-badge{display:inline-flex;align-items:center;gap:6px;background:var(--ol);border-radius:20px;padding:6px 14px;font-size:13px;color:#A05F00;font-weight:600;margin-bottom:12px}
+.pending-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--ol);border-radius:20px;padding:7px 14px;
+  font-size:13px;color:#A05F00;font-weight:600;margin-bottom:12px;
+  animation:badgePulse 2s ease infinite;
+}
+@keyframes badgePulse{0%,100%{opacity:1}50%{opacity:.7}}
 .tag-mgr-add{display:flex;gap:8px;margin-top:10px}
-.tag-mgr-add input{flex:1;border:.5px solid var(--b2);border-radius:var(--rx);padding:8px 10px;font-size:14px;font-family:var(--font);outline:none;background:var(--bg);color:var(--t)}
-.tag-mgr-add button{padding:8px 14px;background:var(--accent);color:white;border:none;border-radius:var(--rx);font-size:14px;cursor:pointer;font-family:var(--font)}
+.tag-mgr-add input{flex:1;border:.5px solid var(--b2);border-radius:var(--rx);padding:9px 12px;font-size:14px;font-family:var(--font);outline:none;background:var(--bg);color:var(--t)}
+.tag-mgr-add input:focus{border-color:var(--accent)}
+.tag-mgr-add button{padding:9px 16px;background:var(--accent);color:white;border:none;border-radius:var(--rx);font-size:14px;cursor:pointer;font-family:var(--font);font-weight:500;transition:opacity .15s;active:opacity:.8}
 </style>
 </head>
 <body>
+
+<!-- Splash -->
+<div id="splash">
+  <div id="splash-icon">📈</div>
+  <h1>交易日志</h1>
+  <p>记录每一次决策</p>
+</div>
 
 <div class="hdr">
   <div class="hdr-in">
@@ -159,7 +357,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 
   <div class="sec">
     <div class="sec-h">价格计算</div>
-    <div class="card" style="margin-bottom:10px">
+    <div class="card">
       <div class="cr"><label>入场价格</label><input type="number" id="e-entry" placeholder="e.g. 95000" inputmode="decimal" oninput="calc()"/></div>
       <div class="cr"><label>止损价格</label><input type="number" id="e-slprice" placeholder="e.g. 93000" inputmode="decimal" oninput="calc()"/></div>
       <div class="cr"><label>盈亏比</label><input type="number" id="e-rr" placeholder="R:R" inputmode="decimal" step="0.5" oninput="calc()"/></div>
@@ -194,13 +392,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
         <input type="file" accept="image/*" onchange="previewImg(this,'prev-entry','img-entry-txt')"/>
         <div class="img-up-icon">📈</div>
         <div class="img-up-txt" id="img-entry-txt">上传入场截图</div>
-        <div class="img-up-sub">点击选择或截图后粘贴</div>
+        <div class="img-up-sub">点击选择 · 支持粘贴</div>
         <img id="prev-entry" class="img-prev"/>
       </div>
     </div>
   </div>
 
-  <button class="btn" onclick="saveEntry()">保存入场记录</button>
+  <button class="btn btn-blue" onclick="saveEntry()">保存入场记录</button>
 </div>
 
 <!-- 复盘 -->
@@ -209,7 +407,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     <div class="card">
       <div class="cr" style="background:var(--al)">
         <label style="color:var(--accent);font-size:13px">正在复盘</label>
-        <span id="review-target-label" style="font-size:13px;color:var(--accent);text-align:right;flex:1"></span>
+        <span id="review-target-label" style="font-size:13px;color:var(--accent);text-align:right;flex:1;font-weight:500"></span>
       </div>
     </div>
   </div>
@@ -261,13 +459,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
         <input type="file" accept="image/*" onchange="previewImg(this,'prev-review','img-review-txt')"/>
         <div class="img-up-icon">📉</div>
         <div class="img-up-txt" id="img-review-txt">上传出场截图</div>
-        <div class="img-up-sub">点击选择或截图后粘贴</div>
+        <div class="img-up-sub">点击选择 · 支持粘贴</div>
         <img id="prev-review" class="img-prev"/>
       </div>
     </div>
   </div>
 
-  <button class="btn green" onclick="saveReview()">保存复盘记录</button>
+  <button class="btn btn-green" onclick="saveReview()">保存复盘记录</button>
 </div>
 
 <!-- 历史 -->
@@ -287,7 +485,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     </div>
   </div>
   <div class="sec">
-    <div class="sec-h">方法标签管理</div>
+    <div class="sec-h">方法标签</div>
     <div class="card">
       <div style="padding:13px 16px">
         <div class="tag-wrap" id="method-mgr"></div>
@@ -299,7 +497,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     </div>
   </div>
   <div class="sec">
-    <div class="sec-h">触发条件标签管理</div>
+    <div class="sec-h">触发条件标签</div>
     <div class="card">
       <div style="padding:13px 16px">
         <div class="tag-wrap" id="trigger-mgr"></div>
@@ -311,9 +509,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     </div>
   </div>
   <div class="sec">
-    <div class="sec-h">数据</div>
+    <div class="sec-h">数据管理</div>
     <div class="card">
-      <div class="cr" onclick="exportExcel()" style="cursor:pointer"><label>导出 Excel (CSV)</label><span style="color:var(--accent);font-size:15px">下载 →</span></div>
+      <div class="cr" onclick="exportExcel()" style="cursor:pointer"><label>导出 Excel</label><span style="color:var(--accent);font-size:15px">下载 →</span></div>
       <div class="cr" onclick="exportJSON()" style="cursor:pointer"><label>导出 JSON</label><span style="color:var(--accent);font-size:15px">下载 →</span></div>
       <div class="cr" onclick="clearData()" style="cursor:pointer"><label style="color:var(--red)">清除所有记录</label><span style="color:var(--red);font-size:15px">清除 →</span></div>
     </div>
@@ -324,10 +522,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 
 <nav class="nav">
   <div class="nav-in">
-    <button class="nb active" id="nav-entry" onclick="switchTab('entry',this)"><span class="ni">✦</span><span class="nl">入场</span></button>
-    <button class="nb" id="nav-review" onclick="switchTab('review',this)"><span class="ni">◎</span><span class="nl">复盘</span></button>
-    <button class="nb" id="nav-history" onclick="switchTab('history',this);renderHistory()"><span class="ni">▤</span><span class="nl">历史</span></button>
-    <button class="nb" id="nav-settings" onclick="switchTab('settings',this);renderTagMgr()"><span class="ni">⊙</span><span class="nl">设置</span></button>
+    <button class="nb active" id="nav-entry" onclick="switchTab('entry',this)">
+      <div class="nb-icon-wrap"><span class="ni">✦</span></div><span class="nl">入场</span>
+    </button>
+    <button class="nb" id="nav-review" onclick="switchTab('review',this)">
+      <div class="nb-icon-wrap"><span class="ni">◎</span></div><span class="nl">复盘</span>
+    </button>
+    <button class="nb" id="nav-history" onclick="switchTab('history',this);renderHistory()">
+      <div class="nb-icon-wrap"><span class="ni">▤</span></div><span class="nl">历史</span>
+    </button>
+    <button class="nb" id="nav-settings" onclick="switchTab('settings',this);renderTagMgr()">
+      <div class="nb-icon-wrap"><span class="ni">⊙</span></div><span class="nl">设置</span>
+    </button>
   </div>
 </nav>
 
@@ -343,6 +549,14 @@ var DEF_TRIGGERS=['4H收线确认','回踩获支撑','成交量放大','突破�
 function G(id){return document.getElementById(id);}
 function T(id,v){G(id).textContent=v;}
 
+// Splash
+window.addEventListener('load',function(){
+  setTimeout(function(){
+    G('splash').classList.add('hide');
+    setTimeout(function(){G('splash').style.display='none';},400);
+  },900);
+});
+
 function init(){
   var d=new Date();
   G('hdr-date').textContent=d.toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'short'});
@@ -351,13 +565,17 @@ function init(){
   renderMethodTags();
   renderTriggerTags();
   checkPending();
+  // Register SW
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  }
 }
 
 function switchTab(name,el){
   document.querySelectorAll('.tab').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active');});
   G('tab-'+name).classList.add('active');
-  G('nav-'+name).classList.add('active');
+  (el||G('nav-'+name)).classList.add('active');
 }
 
 function setDir(d){
@@ -371,7 +589,7 @@ function setRes(r){
   resState=r;
   ['win','loss','flat'].forEach(function(x){G('rb-'+x).className='rc';});
   var m={win:'wa',loss:'la2',flat:'fa'};
-  if(r) G('rb-'+r).className='rc '+m[r];
+  if(r&&m[r]) G('rb-'+r).className='rc '+m[r];
 }
 
 function updateEmo(v){
@@ -390,8 +608,14 @@ function getAssetType(){
 function onAssetChange(){
   var t=getAssetType();
   G('lev-row').style.display=t==='gold'?'none':'flex';
-  G('c-pos-lbl').textContent=t==='gold'?'手数 (lots)':'保证金 (USDT)';
+  T('c-pos-lbl',t==='gold'?'手数 (lots)':'保证金 (USDT)');
   calc();
+}
+
+function animVal(id,val){
+  var el=G(id);
+  el.style.transform='scale(.85)';el.style.opacity='.5';
+  setTimeout(function(){el.textContent=val;el.style.transform='';el.style.opacity='';el.style.transition='transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s ease';},80);
 }
 
 function calc(){
@@ -408,16 +632,15 @@ function calc(){
     T('c-sl-d','—');T('c-rr-s','—');T('c-risk-a','填入场信息');
     warn.style.display='none';info.style.display='none';
   }
-
   if(!entry||!slPrice){reset();return;}
-  if(dirState==='long'&&slPrice>=entry){reset();T('c-sl-d','止损价应低于入场价');return;}
-  if(dirState==='short'&&slPrice<=entry){reset();T('c-sl-d','止损价应高于入场价');return;}
+  if(dirState==='long'&&slPrice>=entry){reset();T('c-sl-d','止损应低于入场价');return;}
+  if(dirState==='short'&&slPrice<=entry){reset();T('c-sl-d','止损应高于入场价');return;}
 
   var slDist=Math.abs(entry-slPrice);
   var tpPrice=isShort?entry-slDist*rr:entry+slDist*rr;
 
-  T('c-sl',slPrice>=100?slPrice.toFixed(2):slPrice.toFixed(4));
-  T('c-tp',tpPrice>=100?tpPrice.toFixed(2):tpPrice.toFixed(4));
+  animVal('c-sl',slPrice>=100?slPrice.toFixed(2):slPrice.toFixed(4));
+  animVal('c-tp',tpPrice>=100?tpPrice.toFixed(2):tpPrice.toFixed(4));
   T('c-rr-s','1 : '+rr);
 
   if(type==='gold'){
@@ -426,22 +649,19 @@ function calc(){
     if(maxLoss){
       var minRisk=slDist*0.01*100;
       if(maxLoss<minRisk){
-        T('c-pos','—');T('c-risk-a','无法开仓');
-        warn.textContent='⚠️ 最大亏损 $'+maxLoss.toFixed(2)+' 不足以开最小仓位（0.01手）。按当前止损位，最小风险为 $'+minRisk.toFixed(2)+'，请调高最大亏损。';
+        animVal('c-pos','—');T('c-risk-a','无法开仓');
+        warn.textContent='⚠️ 最大亏损 $'+maxLoss.toFixed(2)+' 不足。最小仓位风险为 $'+minRisk.toFixed(2)+'，请调高最大亏损。';
         warn.style.display='block';info.style.display='none';
       } else {
-        var rawLots=maxLoss/(slDist*100);
-        var lots=Math.floor(rawLots*100)/100;
+        var lots=Math.floor(maxLoss/(slDist*100)*100)/100;
         var actualRisk=slDist*lots*100;
-        T('c-pos',lots.toFixed(2)+' 手');
-        T('c-risk-a','实际最大亏 $'+actualRisk.toFixed(2));
+        animVal('c-pos',lots.toFixed(2)+' 手');
+        T('c-risk-a','实际亏 $'+actualRisk.toFixed(2));
         warn.style.display='none';
-        if(actualRisk<maxLoss*0.95){
-          info.textContent='ℹ️ 手数已向下取整至 '+lots.toFixed(2)+' 手，实际最大亏损为 $'+actualRisk.toFixed(2)+'（略小于设定的 $'+maxLoss.toFixed(2)+'）。';
-          info.style.display='block';
-        } else {info.style.display='none';}
+        if(actualRisk<maxLoss*0.95){info.textContent='ℹ️ 手数取整至 '+lots.toFixed(2)+' 手，实际最大亏 $'+actualRisk.toFixed(2)+'。';info.style.display='block';}
+        else{info.style.display='none';}
       }
-    } else {T('c-pos','—');T('c-risk-a','填最大亏损');warn.style.display='none';info.style.display='none';}
+    } else {animVal('c-pos','—');T('c-risk-a','填最大亏损');warn.style.display='none';info.style.display='none';}
   } else {
     var lev=parseFloat(G('e-lev').value)||10;
     var slPctC=slDist/entry*100;
@@ -451,26 +671,21 @@ function calc(){
       var minQty=CRYPTO_MIN[sym]||0.001;
       var minRiskC=slDist*minQty;
       if(maxLoss<minRiskC){
-        T('c-pos','—');T('c-risk-a','无法开仓');
-        warn.textContent='⚠️ 最大亏损 '+maxLoss.toFixed(2)+' U 不足以开最小仓位（'+minQty+' '+sym+'）。最小风险为 '+minRiskC.toFixed(2)+' U。';
+        animVal('c-pos','—');T('c-risk-a','无法开仓');
+        warn.textContent='⚠️ 最大亏损 '+maxLoss.toFixed(2)+' U 不足。最小仓位风险为 '+minRiskC.toFixed(2)+' U。';
         warn.style.display='block';info.style.display='none';
       } else {
-        var rawQty=maxLoss/slDist;
-        var qty=Math.floor(rawQty/minQty)*minQty;
+        var qty=Math.floor(maxLoss/slDist/minQty)*minQty;
         var actualRiskC=slDist*qty;
         var margin=qty*entry/lev;
-        T('c-pos',margin.toFixed(2)+' U');
-        T('c-risk-a','实际最大亏 '+actualRiskC.toFixed(2)+' U');
+        animVal('c-pos',margin.toFixed(2)+' U');
+        T('c-risk-a','实际亏 '+actualRiskC.toFixed(2)+' U');
         warn.style.display='none';
-        if(lev>50){
-          warn.textContent='⚠️ 杠杆 '+lev+'x 偏高，爆仓风险较大，请确认是否合理。';
-          warn.style.display='block';info.style.display='none';
-        } else if(actualRiskC<maxLoss*0.95){
-          info.textContent='ℹ️ 数量已向下取整，实际最大亏损为 '+actualRiskC.toFixed(2)+' U（略小于设定的 '+maxLoss.toFixed(2)+' U）。';
-          info.style.display='block';
-        } else {info.style.display='none';}
+        if(lev>50){warn.textContent='⚠️ 杠杆 '+lev+'x 偏高，请谨慎。';warn.style.display='block';info.style.display='none';}
+        else if(actualRiskC<maxLoss*0.95){info.textContent='ℹ️ 数量取整，实际最大亏 '+actualRiskC.toFixed(2)+' U。';info.style.display='block';}
+        else{info.style.display='none';}
       }
-    } else {T('c-pos','—');T('c-risk-a','填最大亏损');warn.style.display='none';info.style.display='none';}
+    } else {animVal('c-pos','—');T('c-risk-a','填最大亏损');warn.style.display='none';info.style.display='none';}
   }
 }
 
@@ -484,10 +699,9 @@ function calcExit(){
   var isShort=dirState==='short';
   var slDist=slPrice?Math.abs(entry-slPrice):1;
   if(type==='gold'){
-    var lotsText=G('c-pos').textContent;
-    var lots=parseFloat(lotsText)||0;
-    var pnlPerOz=isShort?(entry-exit):(exit-entry);
-    var pnlAmt=pnlPerOz*lots*100;
+    var lots=parseFloat(G('c-pos').textContent)||0;
+    var pnl=isShort?(entry-exit):(exit-entry);
+    var pnlAmt=pnl*lots*100;
     var rA=maxLoss?(pnlAmt/maxLoss).toFixed(2):'—';
     G('r-pnl').value='$'+pnlAmt.toFixed(2)+' ('+rA+'R)';
   } else {
@@ -495,15 +709,13 @@ function calcExit(){
     var slPct=slDist/entry*100;
     var rA2=slPct>0?(pnlPct/slPct).toFixed(2):'—';
     var lev=parseFloat(G('e-lev').value)||10;
-    var mText=G('c-pos').textContent;
-    var margin=parseFloat(mText)||0;
+    var margin=parseFloat(G('c-pos').textContent)||0;
     var pnlAmt2=margin*lev*(pnlPct/100);
-    var pStr=pnlAmt2?' / '+(pnlAmt2>=0?'+':'')+pnlAmt2.toFixed(2)+' U':'';
-    G('r-pnl').value=pnlPct.toFixed(2)+'%'+pStr+' ('+rA2+'R)';
+    var ps=pnlAmt2?' / '+(pnlAmt2>=0?'+':'')+pnlAmt2.toFixed(2)+' U':'';
+    G('r-pnl').value=pnlPct.toFixed(2)+'%'+ps+' ('+rA2+'R)';
   }
 }
 
-// Tags
 function getTags(type){
   try{return JSON.parse(localStorage.getItem('tj_'+type+'s')||'null')||(type==='method'?DEF_METHODS:DEF_TRIGGERS);}
   catch(e){return type==='method'?DEF_METHODS:DEF_TRIGGERS;}
@@ -511,26 +723,25 @@ function getTags(type){
 function saveTags(type,tags){localStorage.setItem('tj_'+type+'s',JSON.stringify(tags));}
 
 function renderMethodTags(){
-  var tags=getTags('method');
-  var wrap=G('method-tags'); if(!wrap) return;
-  wrap.innerHTML=tags.map(function(t){
-    var sel=selMethods.indexOf(t)>=0;
-    return '<span class="tag'+(sel?' sel':'')+'" onclick="toggleTag(\'method\',\''+t.replace(/'/g,"\\'")+'\')">'+(sel?'✓ ':'')+t+'</span>';
+  var tags=getTags('method'),w=G('method-tags');if(!w)return;
+  w.innerHTML=tags.map(function(t){
+    var s=selMethods.indexOf(t)>=0;
+    return '<span class="tag'+(s?' sel':'')+'" onclick="toggleTag(\'method\',\''+esc(t)+'\')">'+(s?'✓ ':'')+t+'</span>';
   }).join('');
 }
 function renderTriggerTags(){
-  var tags=getTags('trigger');
-  var wrap=G('trigger-tags'); if(!wrap) return;
-  wrap.innerHTML=tags.map(function(t){
-    var sel=selTriggers.indexOf(t)>=0;
-    return '<span class="tag'+(sel?' sel':'')+'" onclick="toggleTag(\'trigger\',\''+t.replace(/'/g,"\\'")+'\')">'+(sel?'✓ ':'')+t+'</span>';
+  var tags=getTags('trigger'),w=G('trigger-tags');if(!w)return;
+  w.innerHTML=tags.map(function(t){
+    var s=selTriggers.indexOf(t)>=0;
+    return '<span class="tag'+(s?' sel':'')+'" onclick="toggleTag(\'trigger\',\''+esc(t)+'\')">'+(s?'✓ ':'')+t+'</span>';
   }).join('');
 }
+function esc(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 
 function toggleTag(type,t){
   var arr=type==='method'?selMethods:selTriggers;
   var i=arr.indexOf(t);
-  if(i>=0) arr.splice(i,1); else arr.push(t);
+  if(i>=0)arr.splice(i,1);else arr.push(t);
   if(type==='method'){renderMethodTags();G('e-method').value=selMethods.join('、');}
   else{renderTriggerTags();G('e-trigger').value=selTriggers.join('、');}
 }
@@ -539,31 +750,26 @@ function renderTagMgr(){
   ['method','trigger'].forEach(function(type){
     var tags=getTags(type);
     G(type+'-mgr').innerHTML=tags.map(function(t,i){
-      return '<span class="tag" style="cursor:pointer" onclick="removeTag(\''+type+'\','+i+')">'+t+' ✕</span>';
+      return '<span class="tag" onclick="removeTag(\''+type+'\','+i+')">'+t+' ✕</span>';
     }).join('');
   });
 }
-
 function addTag(type){
-  var inp=G('new-'+type);
-  var v=inp.value.trim(); if(!v) return;
-  var tags=getTags(type); tags.push(v);
-  saveTags(type,tags); inp.value='';
+  var inp=G('new-'+type),v=inp.value.trim();if(!v)return;
+  var tags=getTags(type);tags.push(v);saveTags(type,tags);inp.value='';
   renderTagMgr();
-  if(type==='method') renderMethodTags(); else renderTriggerTags();
+  if(type==='method')renderMethodTags();else renderTriggerTags();
+  showToast('已添加「'+v+'」');
 }
-
 function removeTag(type,i){
-  var tags=getTags(type); tags.splice(i,1);
-  saveTags(type,tags); renderTagMgr();
-  if(type==='method') renderMethodTags(); else renderTriggerTags();
+  var tags=getTags(type);tags.splice(i,1);saveTags(type,tags);
+  renderTagMgr();
+  if(type==='method')renderMethodTags();else renderTriggerTags();
 }
 
-// Pending
 function checkPending(){
-  var records=getRecords();
-  var pending=records.find(function(r){return r.status==='open';});
-  G('pending-notice').style.display=pending?'block':'none';
+  var r=getRecords(),p=r.find(function(x){return x.status==='open';});
+  G('pending-notice').style.display=p?'block':'none';
 }
 
 function getV(id){return G(id).value||'';}
@@ -572,15 +778,10 @@ function saveEntry(){
   if(!getV('e-asset')){showToast('请选择交易品种');return;}
   if(!dirState){showToast('请选择做多或做空');return;}
   if(!getV('e-entry')){showToast('请填写入场价格');return;}
-
   var records=getRecords();
   var pending=records.find(function(r){return r.status==='open';});
-  if(pending){
-    showToast('上笔 '+pending.asset+' ('+pending.date+') 尚未复盘\n请先完成复盘再记录新交易');
-    return;
-  }
-
-  var record={
+  if(pending){showToast('上笔 '+pending.asset+' ('+pending.date+')\n尚未复盘，请先完成复盘');return;}
+  var rec={
     id:Date.now(),date:getV('e-date'),asset:getV('e-asset'),tf:getV('e-tf'),dir:dirState,
     entry:getV('e-entry'),slprice:getV('e-slprice'),maxloss:getV('e-maxloss'),rr:getV('e-rr'),lev:getV('e-lev'),
     slDisplay:G('c-sl').textContent,tpDisplay:G('c-tp').textContent,
@@ -589,102 +790,72 @@ function saveEntry(){
     status:'open',result:'',exit:'',pnl:'',diff:'',lesson:'',emo:'',
     savedAt:new Date().toISOString()
   };
-  records.unshift(record);
-  saveRecords(records);
-
-  var dirTxt=dirState==='long'?'做多':'做空';
-  var posLbl=G('c-pos-lbl').textContent;
-  var text='【入场记录】'+record.date+'\n品种：'+record.asset+'　方向：'+dirTxt+'　周期：'+record.tf+'\n入场：'+record.entry+'　止损价：'+record.slDisplay+'　目标价：'+record.tpDisplay+'\n止损距离：'+record.slDist+'　最大亏损：'+(record.maxloss||'—')+'\n'+posLbl+'：'+record.posDisplay+'\n方法：'+(record.method||'—')+'\n触发：'+(record.trigger||'—');
-  copyText(text);
-  showToast('已保存并复制 ✓');
-  checkPending();
-  selMethods=[];selTriggers=[];
-  renderMethodTags();renderTriggerTags();
+  records.unshift(rec);saveRecords(records);
+  var dt=dirState==='long'?'做多':'做空',pl=G('c-pos-lbl').textContent;
+  copyText('【入场记录】'+rec.date+'\n品种：'+rec.asset+'　方向：'+dt+'　周期：'+rec.tf+'\n入场：'+rec.entry+'　止损价：'+rec.slDisplay+'　目标价：'+rec.tpDisplay+'\n止损距离：'+rec.slDist+'　最大亏损：'+(rec.maxloss||'—')+'\n'+pl+'：'+rec.posDisplay+'\n方法：'+(rec.method||'—')+'\n触发：'+(rec.trigger||'—'));
+  showToast('已保存并复制 ✓');checkPending();
+  selMethods=[];selTriggers=[];renderMethodTags();renderTriggerTags();
   G('e-method').value='';G('e-trigger').value='';
 }
 
 function saveReview(){
-  var records=getRecords();
-  if(!records.length){showToast('请先记录入场');return;}
+  var records=getRecords();if(!records.length){showToast('请先记录入场');return;}
   var target;
-  if(reviewTargetId) target=records.find(function(r){return r.id===reviewTargetId;});
-  if(!target) target=records.find(function(r){return r.status==='open';});
+  if(reviewTargetId)target=records.find(function(r){return r.id===reviewTargetId;});
+  if(!target)target=records.find(function(r){return r.status==='open';});
   if(!target){showToast('没有待复盘的交易');return;}
-
-  target.result=resState;
-  target.exit=getV('r-exit');
-  target.pnl=getV('r-pnl');
-  target.diff=getV('r-diff');
-  target.lesson=getV('r-lesson');
-  target.emo=G('r-emo').value;
-  target.status=resState||'open';
+  target.result=resState;target.exit=getV('r-exit');target.pnl=getV('r-pnl');
+  target.diff=getV('r-diff');target.lesson=getV('r-lesson');
+  target.emo=G('r-emo').value;target.status=resState||'open';
   saveRecords(records);
-
-  var dirTxt=target.dir==='long'?'做多':'做空';
-  var resMap={win:'盈利',loss:'亏损',flat:'保本/小亏'};
-  var text='【完整交易记录】'+target.date+'\n品种：'+target.asset+'　方向：'+dirTxt+'　周期：'+target.tf+'\n入场：'+target.entry+'　止损价：'+target.slDisplay+'　目标价：'+target.tpDisplay+'\n─────\n结果：'+(resMap[resState]||'—')+'\n出场：'+(target.exit||'—')+'　盈亏：'+(target.pnl||'—')+'\n差异：'+(target.diff||'—')+'\n下次：'+(target.lesson||'—')+'\n情绪：'+target.emo+'/10';
-  copyText(text);
-  reviewTargetId=null;
-  G('review-target-info').style.display='none';
-  showToast('复盘已保存并复制 ✓');
-  checkPending();
+  var dt=target.dir==='long'?'做多':'做空',rm={win:'盈利',loss:'亏损',flat:'保本/小亏'};
+  copyText('【完整交易记录】'+target.date+'\n品种：'+target.asset+'　方向：'+dt+'　周期：'+target.tf+'\n入场：'+target.entry+'　止损价：'+target.slDisplay+'　目标价：'+target.tpDisplay+'\n─────\n结果：'+(rm[resState]||'—')+'\n出场：'+(target.exit||'—')+'　盈亏：'+(target.pnl||'—')+'\n差异：'+(target.diff||'—')+'\n下次：'+(target.lesson||'—')+'\n情绪：'+target.emo+'/10');
+  reviewTargetId=null;G('review-target-info').style.display='none';
+  showToast('复盘已保存并复制 ✓');checkPending();
 }
 
 function renderHistory(){
-  var records=getRecords();
-  var grid=G('stats-grid'),list=G('history-list');
+  var records=getRecords(),grid=G('stats-grid'),list=G('history-list');
   var closed=records.filter(function(r){return r.result;});
   var wins=closed.filter(function(r){return r.result==='win';});
   var losses=closed.filter(function(r){return r.result==='loss';});
-  var total=closed.length;
-  var winRate=total?Math.round(wins.length/total*100):0;
-
-  function avgR(arr){
-    if(!arr.length) return 0;
-    return (arr.reduce(function(s,r){var m=r.pnl&&r.pnl.match(/([\d.]+)R/);return s+(m?parseFloat(m[1]):1);},0)/arr.length).toFixed(2);
-  }
-  var avgWR=avgR(wins), avgLR=avgR(losses);
-  var exp=total?((wins.length/total*parseFloat(avgWR))-(losses.length/total*parseFloat(avgLR))).toFixed(2):0;
-
+  var total=closed.length,wr=total?Math.round(wins.length/total*100):0;
+  function avgR(arr){if(!arr.length)return 0;return(arr.reduce(function(s,r){var m=r.pnl&&r.pnl.match(/([\d.]+)R/);return s+(m?parseFloat(m[1]):1);},0)/arr.length).toFixed(2);}
+  var aw=avgR(wins),al=avgR(losses);
+  var exp=total?((wins.length/total*parseFloat(aw))-(losses.length/total*parseFloat(al))).toFixed(2):0;
   var maxCL=0,curCL=0;
-  records.slice().reverse().forEach(function(r){if(r.result==='loss'){curCL++;maxCL=Math.max(maxCL,curCL);}else{curCL=0;}});
-
-  grid.innerHTML=
-    '<div class="stat-c"><div class="sv">'+records.length+'</div><div class="sl">总交易次数</div><div class="sd">含未复盘</div></div>'+
-    '<div class="stat-c"><div class="sv '+(winRate>=50?'g':'r')+'">'+winRate+'%</div><div class="sl">胜率</div><div class="sd">已复盘 '+total+' 笔</div></div>'+
-    '<div class="stat-c"><div class="sv g">'+wins.length+'</div><div class="sl">盈利次数</div><div class="sd">平均 '+avgWR+'R</div></div>'+
-    '<div class="stat-c"><div class="sv r">'+losses.length+'</div><div class="sl">亏损次数</div><div class="sd">平均 '+avgLR+'R</div></div>'+
-    '<div class="stat-c"><div class="sv '+(exp>0?'g':'r')+'">'+exp+'R</div><div class="sl">期望值</div><div class="sd">每笔平均期望收益<br>正数表示系统有优势</div></div>'+
-    '<div class="stat-c"><div class="sv r">'+maxCL+'</div><div class="sl">最大连续亏损</div><div class="sd">连续亏损笔数峰值</div></div>';
-
+  records.slice().reverse().forEach(function(r){if(r.result==='loss'){curCL++;maxCL=Math.max(maxCL,curCL);}else curCL=0;});
+  var delay=function(i){return 'animation-delay:'+(i*0.05)+'s';};
+  grid.innerHTML=[
+    [''+records.length,'总交易次数','含未复盘',''],
+    [wr+'%','胜率','已复盘 '+total+' 笔',wr>=50?'g':'r'],
+    [''+wins.length,'盈利次数','平均 '+aw+'R','g'],
+    [''+losses.length,'亏损次数','平均 '+al+'R','r'],
+    [exp+'R','期望值','正数代表系统有优势',parseFloat(exp)>0?'g':'r'],
+    [''+maxCL,'最大连续亏损','连续亏损峰值','r']
+  ].map(function(s,i){return '<div class="stat-c" style="'+delay(i)+'"><div class="sv '+s[3]+'">'+s[0]+'</div><div class="sl">'+s[1]+'</div><div class="sd">'+s[2]+'</div></div>';}).join('');
   if(!records.length){list.innerHTML='<div class="empty">还没有交易记录<br>从入场开始记录吧</div>';return;}
-  var dirMap={long:'做多 ↑',short:'做空 ↓'};
-  var resMap2={win:'盈利',loss:'亏损',flat:'保本',open:'持仓中','':`持仓中`};
-  list.innerHTML=records.map(function(r){
-    var pnlClass=r.result==='win'?' g':r.result==='loss'?' r':'';
-    return '<div class="hi" onclick="openReview('+r.id+')"><div class="hi-dot '+(r.status==='open'?'open':r.result||'open')+'"></div><div class="hi-info"><div class="hi-top"><span class="hi-asset">'+(r.asset||'—')+'</span><span class="hi-pnl'+pnlClass+'">'+(r.pnl||resMap2[r.status])+'</span></div><div class="hi-bot"><span class="hi-date">'+r.date+'</span><span class="hi-dir">'+(dirMap[r.dir]||'—')+' · '+(r.tf||'')+'</span></div></div></div>';
+  var dm={long:'做多 ↑',short:'做空 ↓'};
+  var rm={win:'盈利',loss:'亏损',flat:'保本',open:'持仓中','':`持仓中`};
+  list.innerHTML=records.map(function(r,i){
+    var pc=r.result==='win'?' g':r.result==='loss'?' r':'';
+    return '<div class="hi" style="'+delay(i)+'" onclick="openReview('+r.id+')"><div class="hi-dot '+(r.status==='open'?'open':r.result||'open')+'"></div><div class="hi-info"><div class="hi-top"><span class="hi-asset">'+(r.asset||'—')+'</span><span class="hi-pnl'+pc+'">'+(r.pnl||rm[r.status])+'</span></div><div class="hi-bot"><span class="hi-date">'+r.date+'</span><span class="hi-dir">'+(dm[r.dir]||'—')+' · '+(r.tf||'')+'</span></div></div></div>';
   }).join('');
 }
 
 function openReview(id){
-  var records=getRecords();
-  var r=records.find(function(x){return x.id===id;});
-  if(!r) return;
+  var records=getRecords(),r=records.find(function(x){return x.id===id;});
+  if(!r)return;
   reviewTargetId=id;
-  G('e-entry').value=r.entry||'';
-  G('e-slprice').value=r.slprice||'';
-  G('e-maxloss').value=r.maxloss||'';
-  G('e-lev').value=r.lev||'';
-  G('e-rr').value=r.rr||'';
+  G('e-entry').value=r.entry||'';G('e-slprice').value=r.slprice||'';
+  G('e-maxloss').value=r.maxloss||'';G('e-lev').value=r.lev||'';G('e-rr').value=r.rr||'';
   dirState=r.dir||'';
   setRes(r.result||'');
-  G('r-exit').value=r.exit||'';
-  G('r-pnl').value=r.pnl||'';
-  G('r-diff').value=r.diff||'';
-  G('r-lesson').value=r.lesson||'';
+  G('r-exit').value=r.exit||'';G('r-pnl').value=r.pnl||'';
+  G('r-diff').value=r.diff||'';G('r-lesson').value=r.lesson||'';
   if(r.emo){G('r-emo').value=r.emo;updateEmo(r.emo);}
-  var dirTxt=r.dir==='long'?'做多':'做空';
-  G('review-target-label').textContent=r.asset+' '+dirTxt+' '+r.date;
+  var dt=r.dir==='long'?'做多':'做空';
+  G('review-target-label').textContent=r.asset+' '+dt+' '+r.date;
   G('review-target-info').style.display='block';
   switchTab('review',G('nav-review'));
 }
@@ -695,10 +866,8 @@ function saveRecords(r){try{localStorage.setItem('tj_records',JSON.stringify(r))
 function loadSettings(){
   try{
     var s=JSON.parse(localStorage.getItem('tj_settings')||'{}');
-    if(s.rr) G('s-rr').value=s.rr;
-    if(s.lev) G('s-lev').value=s.lev;
-    G('e-rr').value=s.rr||2;
-    G('e-lev').value=s.lev||10;
+    if(s.rr){G('s-rr').value=s.rr;}if(s.lev){G('s-lev').value=s.lev;}
+    G('e-rr').value=s.rr||2;G('e-lev').value=s.lev||10;
   }catch(e){}
 }
 function saveSettings(){
@@ -710,80 +879,51 @@ function saveSettings(){
 }
 
 function exportExcel(){
-  var records=getRecords();
-  if(!records.length){showToast('暂无记录');return;}
-  var headers=['日期','品种','方向','周期','入场价','止损价格','止损价(计算)','目标价','止损距离','最大亏损','仓位/保证金','盈亏比','杠杆','结果','出场价','盈亏','差异','教训','情绪','保存时间'];
-  var dm={long:'做多',short:'做空'};
-  var rm={win:'盈利',loss:'亏损',flat:'保本',open:'持仓中','':`持仓中`};
-  var rows=records.map(function(r){
-    return [r.date,r.asset,dm[r.dir]||'',r.tf,r.entry,r.slprice,r.slDisplay||'',r.tpDisplay||'',r.slDist||'',r.maxloss||'',r.posDisplay||'',r.rr||'',r.lev||'',rm[r.result]||rm[r.status],r.exit||'',r.pnl||'',r.diff||'',r.lesson||'',r.emo||'',r.savedAt||''];
-  });
-  var BOM='\uFEFF';
-  var csv=BOM+[headers].concat(rows).map(function(row){
-    return row.map(function(v){
-      var s=String(v||'').replace(/"/g,'""');
-      return (s.indexOf(',')>=0||s.indexOf('\n')>=0||s.indexOf('"')>=0)?'"'+s+'"':s;
-    }).join(',');
-  }).join('\n');
-  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;a.download='交易日志_'+new Date().toISOString().split('T')[0]+'.csv';
-  a.click();URL.revokeObjectURL(url);
-  showToast('Excel已下载');
+  var records=getRecords();if(!records.length){showToast('暂无记录');return;}
+  var h=['日期','品种','方向','周期','入场价','止损价格','止损价(算)','目标价','止损距离','最大亏损','仓位/保证金','盈亏比','杠杆','结果','出场价','盈亏','差异','教训','情绪','时间'];
+  var dm={long:'做多',short:'做空'},rm={win:'盈利',loss:'亏损',flat:'保本',open:'持仓中','':`持仓中`};
+  var rows=records.map(function(r){return[r.date,r.asset,dm[r.dir]||'',r.tf,r.entry,r.slprice,r.slDisplay||'',r.tpDisplay||'',r.slDist||'',r.maxloss||'',r.posDisplay||'',r.rr||'',r.lev||'',rm[r.result]||rm[r.status],r.exit||'',r.pnl||'',r.diff||'',r.lesson||'',r.emo||'',r.savedAt||''];});
+  var csv='\uFEFF'+[h].concat(rows).map(function(row){return row.map(function(v){var s=String(v||'').replace(/"/g,'""');return(s.indexOf(',')>=0||s.indexOf('\n')>=0||s.indexOf('"')>=0)?'"'+s+'"':s;}).join(',');}).join('\n');
+  dl(new Blob([csv],{type:'text/csv;charset=utf-8'}),'交易日志_'+now()+'.csv');
+  showToast('Excel 已下载');
 }
-
 function exportJSON(){
-  var records=getRecords();
-  if(!records.length){showToast('暂无记录');return;}
-  var blob=new Blob([JSON.stringify(records,null,2)],{type:'application/json'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;a.download='交易日志_'+new Date().toISOString().split('T')[0]+'.json';
-  a.click();URL.revokeObjectURL(url);
-  showToast('JSON已下载');
+  var r=getRecords();if(!r.length){showToast('暂无记录');return;}
+  dl(new Blob([JSON.stringify(r,null,2)],{type:'application/json'}),'交易日志_'+now()+'.json');
+  showToast('JSON 已下载');
 }
-
-function clearData(){
-  if(confirm('确定要清除所有交易记录吗？此操作不可恢复。')){
-    localStorage.removeItem('tj_records');
-    renderHistory();checkPending();showToast('已清除');
-  }
-}
+function dl(blob,name){var u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+function now(){return new Date().toISOString().split('T')[0];}
+function clearData(){if(confirm('确定要清除所有交易记录吗？此操作不可恢复。')){localStorage.removeItem('tj_records');renderHistory();checkPending();showToast('已清除');}}
 
 function previewImg(input,imgId,txtId){
-  var file=input.files[0];if(!file) return;
-  var reader=new FileReader();
-  reader.onload=function(e){G(imgId).src=e.target.result;G(imgId).style.display='block';G(txtId).textContent='点击更换截图';};
-  reader.readAsDataURL(file);
+  var f=input.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(e){G(imgId).src=e.target.result;G(imgId).style.display='block';G(txtId).textContent='点击更换截图';};
+  r.readAsDataURL(f);
 }
-
 document.addEventListener('paste',function(e){
-  var items=e.clipboardData&&e.clipboardData.items;if(!items) return;
+  var items=e.clipboardData&&e.clipboardData.items;if(!items)return;
   for(var i=0;i<items.length;i++){
     if(items[i].type.indexOf('image')!==-1){
-      var file=items[i].getAsFile();
-      var reader=new FileReader();
+      var f=items[i].getAsFile(),r=new FileReader();
       var isR=G('tab-review').classList.contains('active');
-      var imgId=isR?'prev-review':'prev-entry';
-      var txtId=isR?'img-review-txt':'img-entry-txt';
-      (function(iid,tid){
-        reader.onload=function(ev){G(iid).src=ev.target.result;G(iid).style.display='block';G(tid).textContent='点击更换截图';};
-      })(imgId,txtId);
-      reader.readAsDataURL(file);
+      var ii=isR?'prev-review':'prev-entry',ti=isR?'img-review-txt':'img-entry-txt';
+      (function(ii2,ti2){r.onload=function(ev){G(ii2).src=ev.target.result;G(ii2).style.display='block';G(ti2).textContent='点击更换截图';};})(ii,ti);
+      r.readAsDataURL(f);
     }
   }
 });
 
-function copyText(text){
-  try{navigator.clipboard.writeText(text);}
-  catch(e){var ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function copyText(t){
+  try{navigator.clipboard.writeText(t);}
+  catch(e){var ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
 }
 
-var _toastTimer;
+var _tt;
 function showToast(msg){
   var t=G('toast');t.textContent=msg;t.classList.add('show');
-  clearTimeout(_toastTimer);_toastTimer=setTimeout(function(){t.classList.remove('show');},2800);
+  clearTimeout(_tt);_tt=setTimeout(function(){t.classList.remove('show');},2800);
 }
 
 init();
