@@ -395,6 +395,7 @@ input[type=range]::-webkit-slider-thumb {
           <div class="calc-sub" id="c-risk-a">填入场信息</div>
         </div>
       </div>
+      <div id="risk-warning" style="display:none; margin-top:8px; background:var(--red-light); border:1px solid var(--red); border-radius:var(--radius-sm); padding:10px 14px; font-size:13px; color:#C0392B; font-weight:500; line-height:1.5;"></div>
     </div>
 
     <div class="section">
@@ -639,17 +640,21 @@ function calc() {
   const maxLoss = parseFloat(document.getElementById('e-maxloss').value);
   const isShort = dirState === 'short';
   const type = getAssetType();
+  const warning = document.getElementById('risk-warning');
 
   const reset = () => {
     ['c-sl','c-tp','c-pos'].forEach(id => document.getElementById(id).textContent = '—');
     document.getElementById('c-sl-d').textContent = '—';
     document.getElementById('c-rr-s').textContent = '—';
     document.getElementById('c-risk-a').textContent = '填入场信息';
+    warning.style.display = 'none';
   };
+
+  const showWarning = (msg) => { warning.textContent = msg; warning.style.display = 'block'; };
+  const hideWarning = () => { warning.style.display = 'none'; };
 
   if (!entry || !slPrice) { reset(); return; }
 
-  // validate direction vs sl price
   if (dirState === 'long' && slPrice >= entry) { reset(); document.getElementById('c-sl-d').textContent = '止损价应低于入场价'; return; }
   if (dirState === 'short' && slPrice <= entry) { reset(); document.getElementById('c-sl-d').textContent = '止损价应高于入场价'; return; }
 
@@ -663,26 +668,48 @@ function calc() {
   if (type === 'gold') {
     const slPct = (slDist / entry * 100).toFixed(2);
     document.getElementById('c-sl-d').textContent = '$' + slDist.toFixed(2) + ' / ' + slPct + '%';
+
     if (maxLoss) {
       const lots = maxLoss / (slDist * 100);
       document.getElementById('c-pos').textContent = lots.toFixed(2) + ' 手';
       document.getElementById('c-risk-a').textContent = '最大亏 $' + maxLoss.toFixed(0);
+
+      // warn if lots is unusually large (e.g. stop too tight relative to maxLoss)
+      if (lots > 100) {
+        showWarning('⚠️ 手数异常偏大（' + lots.toFixed(2) + ' 手），请确认止损价是否设置正确。');
+      } else if (slDist < 0.5) {
+        showWarning('⚠️ 止损距离仅 $' + slDist.toFixed(2) + '，止损位可能设置过紧，容易被扫损。');
+      } else {
+        hideWarning();
+      }
     } else {
       document.getElementById('c-pos').textContent = '—';
       document.getElementById('c-risk-a').textContent = '填最大亏损';
+      hideWarning();
     }
   } else {
     const lev = parseFloat(document.getElementById('e-lev').value) || 10;
     const slPct = slDist / entry * 100;
     document.getElementById('c-sl-d').textContent = (isShort ? '+' : '-') + slPct.toFixed(2) + '%';
+
     if (maxLoss) {
       const posVal = maxLoss / (slPct / 100);
       const margin = posVal / lev;
+
       document.getElementById('c-pos').textContent = margin.toFixed(2) + ' U';
       document.getElementById('c-risk-a').textContent = '最大亏 ' + maxLoss.toFixed(0) + ' U';
+
+      if (slPct < 0.3) {
+        showWarning('⚠️ 止损距离仅 ' + slPct.toFixed(2) + '%，止损位可能设置过紧，容易被扫损。');
+      } else if (lev > 50) {
+        showWarning('⚠️ 杠杆 ' + lev + 'x 偏高，爆仓风险较大，请确认是否合理。');
+      } else {
+        hideWarning();
+      }
     } else {
       document.getElementById('c-pos').textContent = '—';
       document.getElementById('c-risk-a').textContent = '填最大亏损';
+      hideWarning();
     }
   }
 }
