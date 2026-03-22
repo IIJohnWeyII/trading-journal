@@ -1,976 +1,789 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="交易日志" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="交易日志"/>
 <title>交易日志</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
-:root {
-  --bg: #F2F2F7;
-  --card: #FFFFFF;
-  --card2: #F9F9FB;
-  --text: #1C1C1E;
-  --text2: #6E6E73;
-  --text3: #AEAEB2;
-  --border: rgba(0,0,0,0.08);
-  --border2: rgba(0,0,0,0.12);
-  --accent: #007AFF;
-  --accent-light: rgba(0,122,255,0.10);
-  --green: #34C759;
-  --green-light: rgba(52,199,89,0.12);
-  --red: #FF3B30;
-  --red-light: rgba(255,59,48,0.12);
-  --orange: #FF9500;
-  --orange-light: rgba(255,149,0,0.12);
-  --radius: 14px;
-  --radius-sm: 10px;
-  --radius-xs: 8px;
-  --font: 'DM Sans', -apple-system, sans-serif;
-  --mono: 'DM Mono', monospace;
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+:root{
+  --bg:#F2F2F7;--card:#FFF;--card2:#F9F9FB;
+  --t:#1C1C1E;--t2:#6E6E73;--t3:#AEAEB2;
+  --b:rgba(0,0,0,.08);--b2:rgba(0,0,0,.12);
+  --accent:#007AFF;--al:rgba(0,122,255,.10);
+  --green:#34C759;--gl:rgba(52,199,89,.12);
+  --red:#FF3B30;--rl:rgba(255,59,48,.12);
+  --orange:#FF9500;--ol:rgba(255,149,0,.12);
+  --r:14px;--rs:10px;--rx:8px;
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
+  --mono:'SF Mono',SFMono-Regular,monospace;
+  --sb:env(safe-area-inset-bottom,0px);
 }
-
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  padding-bottom: calc(80px + var(--safe-bottom));
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Header */
-.header {
-  background: rgba(242,242,247,0.85);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  padding: 16px 20px 12px;
-  border-bottom: 0.5px solid var(--border);
-}
-.header-inner { max-width: 480px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-.header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
-.header-date { font-size: 13px; color: var(--text2); font-weight: 400; }
-
-/* Bottom nav */
-.nav {
-  position: fixed;
-  bottom: 0;
-  left: 0; right: 0;
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-top: 0.5px solid var(--border);
-  padding: 8px 0 calc(8px + var(--safe-bottom));
-  z-index: 100;
-}
-.nav-inner { max-width: 480px; margin: 0 auto; display: flex; }
-.nav-btn {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 6px 4px; cursor: pointer; border: none; background: none; font-family: var(--font);
-  color: var(--text3); transition: color 0.15s;
-}
-.nav-btn.active { color: var(--accent); }
-.nav-icon { font-size: 22px; line-height: 1; }
-.nav-label { font-size: 10px; font-weight: 500; }
-
-/* Content */
-.content { max-width: 480px; margin: 0 auto; padding: 16px 16px 8px; }
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
-
-/* Section */
-.section { margin-bottom: 28px; }
-.section-header { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; padding: 0 4px; }
-
-/* Card */
-.card {
-  background: var(--card);
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px var(--border);
-}
-.card-row {
-  display: flex; align-items: center;
-  padding: 13px 16px;
-  border-bottom: 0.5px solid var(--border);
-  gap: 12px;
-}
-.card-row:last-child { border-bottom: none; }
-.card-row label { font-size: 15px; color: var(--text); flex-shrink: 0; min-width: 80px; }
-.card-row input, .card-row select {
-  flex: 1; border: none; background: none; font-size: 15px; color: var(--text);
-  font-family: var(--font); text-align: right; outline: none; min-width: 0;
-  -webkit-appearance: none;
-}
-.card-row input::placeholder { color: var(--text3); }
-.card-row select { color: var(--text2); }
-.card-row select option { color: var(--text); }
-
-/* Textarea row */
-.card-textarea { padding: 13px 16px; border-bottom: 0.5px solid var(--border); }
-.card-textarea:last-child { border-bottom: none; }
-.card-textarea label { display: block; font-size: 13px; color: var(--text2); margin-bottom: 6px; font-weight: 500; }
-.card-textarea textarea {
-  width: 100%; border: none; background: none; font-size: 15px; color: var(--text);
-  font-family: var(--font); resize: none; outline: none; line-height: 1.5;
-  min-height: 72px;
-}
-.card-textarea textarea::placeholder { color: var(--text3); }
-
-/* Direction picker */
-.dir-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-.dir-card {
-  background: var(--card); border-radius: var(--radius-sm);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px var(--border);
-  padding: 14px; text-align: center; cursor: pointer;
-  transition: all 0.15s; border: 2px solid transparent;
-}
-.dir-card .dir-icon { font-size: 24px; margin-bottom: 4px; }
-.dir-card .dir-label { font-size: 14px; font-weight: 600; }
-.dir-card .dir-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
-.dir-card.long-active { background: var(--green-light); border-color: var(--green); }
-.dir-card.long-active .dir-label { color: #1A7A35; }
-.dir-card.short-active { background: var(--red-light); border-color: var(--red); }
-.dir-card.short-active .dir-label { color: #C0392B; }
-
-/* Calc result */
-.calc-result {
-  background: var(--card2);
-  border-radius: var(--radius);
-  padding: 16px;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 0;
-  box-shadow: 0 0 0 0.5px var(--border);
-  margin-bottom: 0;
-}
-.calc-item { text-align: center; padding: 8px 4px; position: relative; }
-.calc-item + .calc-item::before {
-  content: '';
-  position: absolute; left: 0; top: 20%; bottom: 20%;
-  width: 0.5px; background: var(--border2);
-}
-.calc-val { font-size: 17px; font-weight: 600; font-family: var(--mono); color: var(--text); letter-spacing: -0.5px; }
-.calc-val.green { color: var(--green); }
-.calc-val.red { color: var(--red); }
-.calc-lbl { font-size: 11px; color: var(--text2); margin-top: 3px; font-weight: 500; }
-.calc-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
-
-/* Result picker */
-.res-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-.res-card {
-  background: var(--card); border-radius: var(--radius-sm);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px var(--border);
-  padding: 12px 6px; text-align: center; cursor: pointer;
-  border: 2px solid transparent; transition: all 0.15s;
-}
-.res-card .res-icon { font-size: 20px; }
-.res-card .res-label { font-size: 13px; font-weight: 600; margin-top: 4px; }
-.res-card.win-active { background: var(--green-light); border-color: var(--green); }
-.res-card.win-active .res-label { color: #1A7A35; }
-.res-card.loss-active { background: var(--red-light); border-color: var(--red); }
-.res-card.loss-active .res-label { color: #C0392B; }
-.res-card.flat-active { background: var(--orange-light); border-color: var(--orange); }
-.res-card.flat-active .res-label { color: #A05F00; }
-
-/* Emotion slider */
-.emo-wrap { padding: 13px 16px; }
-.emo-label { font-size: 13px; color: var(--text2); font-weight: 500; margin-bottom: 10px; }
-.emo-slider-row { display: flex; align-items: center; gap: 10px; }
-.emo-slider-row span { font-size: 12px; color: var(--text3); white-space: nowrap; }
-.emo-val { font-size: 17px; font-weight: 600; color: var(--accent); min-width: 24px; text-align: center; }
-input[type=range] {
-  flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
-  background: linear-gradient(to right, var(--accent) 0%, var(--accent) 70%, var(--border2) 70%);
-  border-radius: 2px; outline: none;
-}
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 22px; height: 22px;
-  border-radius: 50%; background: white; border: 0.5px solid var(--border2);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
-
-/* Image upload */
-.img-upload {
-  margin: 0 16px 13px;
-  border: 1.5px dashed var(--border2);
-  border-radius: var(--radius-sm);
-  padding: 20px;
-  text-align: center;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.15s;
-}
-.img-upload:active { border-color: var(--accent); }
-.img-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-.img-upload-icon { font-size: 28px; margin-bottom: 6px; }
-.img-upload-text { font-size: 13px; color: var(--text2); }
-.img-upload-sub { font-size: 12px; color: var(--text3); margin-top: 3px; }
-.img-preview { width: 100%; border-radius: var(--radius-xs); display: none; margin-top: 10px; max-height: 200px; object-fit: cover; }
-
-/* Copy button */
-.copy-btn {
-  width: 100%; padding: 15px;
-  background: var(--accent);
-  color: white; border: none; border-radius: var(--radius);
-  font-size: 16px; font-weight: 600; font-family: var(--font);
-  cursor: pointer; margin-top: 8px;
-  box-shadow: 0 2px 8px rgba(0,122,255,0.25);
-  transition: opacity 0.15s, transform 0.1s;
-  letter-spacing: -0.2px;
-}
-.copy-btn:active { opacity: 0.85; transform: scale(0.99); }
-.copy-btn.green-btn { background: var(--green); box-shadow: 0 2px 8px rgba(52,199,89,0.25); }
-
-/* Setup info */
-.setup-info {
-  background: var(--accent-light);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  font-size: 13px; color: var(--accent);
-  margin-bottom: 16px;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-/* Stats */
-.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-.stat-card {
-  background: var(--card);
-  border-radius: var(--radius-sm);
-  padding: 14px 16px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px var(--border);
-}
-.stat-val { font-size: 22px; font-weight: 600; font-family: var(--mono); letter-spacing: -0.5px; }
-.stat-lbl { font-size: 12px; color: var(--text2); margin-top: 3px; }
-.stat-val.green { color: var(--green); }
-.stat-val.red { color: var(--red); }
-
-/* History list */
-.history-item {
-  background: var(--card);
-  border-radius: var(--radius-sm);
-  padding: 14px 16px;
-  margin-bottom: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px var(--border);
-  display: flex; align-items: center; gap: 12px;
-}
-.history-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.history-dot.win { background: var(--green); }
-.history-dot.loss { background: var(--red); }
-.history-dot.flat { background: var(--orange); }
-.history-dot.open { background: var(--accent); }
-.history-info { flex: 1; min-width: 0; }
-.history-top { display: flex; align-items: center; justify-content: space-between; }
-.history-asset { font-size: 15px; font-weight: 600; }
-.history-pnl { font-size: 15px; font-weight: 600; font-family: var(--mono); }
-.history-pnl.green { color: var(--green); }
-.history-pnl.red { color: var(--red); }
-.history-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 3px; }
-.history-date { font-size: 12px; color: var(--text3); }
-.history-dir { font-size: 12px; color: var(--text2); }
-.history-empty { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 15px; }
-
-/* Toast */
-.toast {
-  position: fixed; bottom: calc(90px + var(--safe-bottom)); left: 50%; transform: translateX(-50%) translateY(20px);
-  background: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
-  border-radius: 20px; font-size: 14px; font-weight: 500;
-  pointer-events: none; opacity: 0; transition: all 0.3s; white-space: nowrap;
-  z-index: 200;
-}
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:var(--bg);color:var(--t);min-height:100vh;padding-bottom:calc(80px + var(--sb));-webkit-font-smoothing:antialiased}
+.hdr{background:rgba(242,242,247,.9);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);position:sticky;top:0;z-index:100;padding:16px 20px 12px;border-bottom:.5px solid var(--b)}
+.hdr-in{max-width:480px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.hdr h1{font-size:20px;font-weight:600;letter-spacing:-.3px}
+.hdr-date{font-size:13px;color:var(--t2)}
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid var(--b);padding:8px 0 calc(8px + var(--sb));z-index:100}
+.nav-in{max-width:480px;margin:0 auto;display:flex}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:pointer;border:none;background:none;font-family:var(--font);color:var(--t3);transition:color .15s}
+.nb.active{color:var(--accent)}
+.ni{font-size:22px;line-height:1}.nl{font-size:10px;font-weight:500}
+.wrap{max-width:480px;margin:0 auto;padding:16px 16px 8px}
+.tab{display:none}.tab.active{display:block}
+.sec{margin-bottom:24px}
+.sec-h{font-size:12px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding:0 4px}
+.card{background:var(--card);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06),0 0 0 .5px var(--b)}
+.cr{display:flex;align-items:center;padding:13px 16px;border-bottom:.5px solid var(--b);gap:12px}
+.cr:last-child{border-bottom:none}
+.cr label{font-size:15px;color:var(--t);flex-shrink:0;min-width:80px}
+.cr input,.cr select{flex:1;border:none;background:none;font-size:15px;color:var(--t);font-family:var(--font);text-align:right;outline:none;min-width:0;-webkit-appearance:none}
+.cr input::placeholder{color:var(--t3)}
+.cr select{color:var(--t2)}
+.ct{padding:13px 16px;border-bottom:.5px solid var(--b)}
+.ct:last-child{border-bottom:none}
+.ct label{display:block;font-size:13px;color:var(--t2);margin-bottom:6px;font-weight:500}
+.ct textarea{width:100%;border:none;background:none;font-size:15px;color:var(--t);font-family:var(--font);resize:none;outline:none;line-height:1.5;min-height:48px}
+.ct textarea::placeholder{color:var(--t3)}
+.tag-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.tag{padding:5px 12px;border-radius:20px;font-size:13px;cursor:pointer;border:.5px solid var(--b2);background:var(--bg);color:var(--t2);transition:all .15s;white-space:nowrap;-webkit-user-select:none;user-select:none}
+.tag.sel{background:var(--al);border-color:var(--accent);color:var(--accent);font-weight:500}
+.dir-g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.dc{background:var(--card);border-radius:var(--rs);box-shadow:0 1px 3px rgba(0,0,0,.06),0 0 0 .5px var(--b);padding:14px;text-align:center;cursor:pointer;transition:all .15s;border:2px solid transparent}
+.dc .di{font-size:24px;margin-bottom:4px}.dc .dl{font-size:14px;font-weight:600}.dc .ds{font-size:12px;color:var(--t2);margin-top:2px}
+.dc.la{background:var(--gl);border-color:var(--green)}.dc.la .dl{color:#1A7A35}
+.dc.sa{background:var(--rl);border-color:var(--red)}.dc.sa .dl{color:#C0392B}
+.calc-box{background:var(--card2);border-radius:var(--r);padding:16px;display:grid;grid-template-columns:1fr 1fr 1fr;box-shadow:0 0 0 .5px var(--b)}
+.ci{text-align:center;padding:8px 4px;position:relative}
+.ci+.ci::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:.5px;background:var(--b2)}
+.cv{font-size:17px;font-weight:600;font-family:var(--mono);color:var(--t);letter-spacing:-.5px}
+.cv.g{color:var(--green)}.cv.r{color:var(--red)}.cv.a{color:var(--accent)}
+.cl{font-size:11px;color:var(--t2);margin-top:3px;font-weight:500}
+.cs{font-size:11px;color:var(--t3);margin-top:2px}
+.warn{display:none;margin-top:8px;background:var(--rl);border:1px solid var(--red);border-radius:var(--rs);padding:10px 14px;font-size:13px;color:#C0392B;font-weight:500;line-height:1.6}
+.info-box{display:none;margin-top:8px;background:var(--al);border:1px solid var(--accent);border-radius:var(--rs);padding:10px 14px;font-size:13px;color:var(--accent);line-height:1.6}
+.res-g{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.rc{background:var(--card);border-radius:var(--rs);box-shadow:0 1px 3px rgba(0,0,0,.06),0 0 0 .5px var(--b);padding:12px 6px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all .15s}
+.rc .ri{font-size:20px}.rc .rl{font-size:13px;font-weight:600;margin-top:4px}
+.rc.wa{background:var(--gl);border-color:var(--green)}.rc.wa .rl{color:#1A7A35}
+.rc.la2{background:var(--rl);border-color:var(--red)}.rc.la2 .rl{color:#C0392B}
+.rc.fa{background:var(--ol);border-color:var(--orange)}.rc.fa .rl{color:#A05F00}
+.emo-w{padding:13px 16px}
+.emo-l{font-size:13px;color:var(--t2);font-weight:500;margin-bottom:10px}
+.emo-r{display:flex;align-items:center;gap:10px}
+.emo-r span{font-size:12px;color:var(--t3);white-space:nowrap}
+.emo-v{font-size:17px;font-weight:600;color:var(--accent);min-width:24px;text-align:center}
+input[type=range]{flex:1;height:4px;-webkit-appearance:none;appearance:none;background:linear-gradient(to right,var(--accent) 0%,var(--accent) 70%,var(--b2) 70%);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:white;border:.5px solid var(--b2);box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.img-up{margin:0 16px 13px;border:1.5px dashed var(--b2);border-radius:var(--rs);padding:20px;text-align:center;cursor:pointer;position:relative;overflow:hidden}
+.img-up input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-up-icon{font-size:28px;margin-bottom:6px}
+.img-up-txt{font-size:13px;color:var(--t2)}
+.img-up-sub{font-size:12px;color:var(--t3);margin-top:3px}
+.img-prev{width:100%;border-radius:var(--rx);display:none;margin-top:10px;max-height:200px;object-fit:cover}
+.btn{width:100%;padding:15px;background:var(--accent);color:white;border:none;border-radius:var(--r);font-size:16px;font-weight:600;font-family:var(--font);cursor:pointer;margin-top:8px;box-shadow:0 2px 8px rgba(0,122,255,.25);transition:opacity .15s,transform .1s;letter-spacing:-.2px}
+.btn:active{opacity:.85;transform:scale(.99)}
+.btn.green{background:var(--green);box-shadow:0 2px 8px rgba(52,199,89,.25)}
+.stats-g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-c{background:var(--card);border-radius:var(--rs);padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 0 0 .5px var(--b)}
+.sv{font-size:22px;font-weight:600;font-family:var(--mono);letter-spacing:-.5px}
+.sl{font-size:12px;color:var(--t2);margin-top:3px}
+.sd{font-size:11px;color:var(--t3);margin-top:2px;line-height:1.4}
+.sv.g{color:var(--green)}.sv.r{color:var(--red)}
+.hi{background:var(--card);border-radius:var(--rs);padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 0 0 .5px var(--b);display:flex;align-items:center;gap:12px;cursor:pointer}
+.hi-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.hi-dot.win{background:var(--green)}.hi-dot.loss{background:var(--red)}.hi-dot.flat{background:var(--orange)}.hi-dot.open{background:var(--accent)}
+.hi-info{flex:1;min-width:0}
+.hi-top{display:flex;align-items:center;justify-content:space-between}
+.hi-asset{font-size:15px;font-weight:600}
+.hi-pnl{font-size:15px;font-weight:600;font-family:var(--mono)}
+.hi-pnl.g{color:var(--green)}.hi-pnl.r{color:var(--red)}
+.hi-bot{display:flex;align-items:center;justify-content:space-between;margin-top:3px}
+.hi-date{font-size:12px;color:var(--t3)}.hi-dir{font-size:12px;color:var(--t2)}
+.empty{text-align:center;padding:40px 20px;color:var(--t3);font-size:15px}
+.toast{position:fixed;bottom:calc(90px + var(--sb));left:50%;transform:translateX(-50%) translateY(20px);background:rgba(0,0,0,.8);color:white;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:500;pointer-events:none;opacity:0;transition:all .3s;z-index:200;max-width:90vw;text-align:center;white-space:pre-line}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.info-hint{background:var(--al);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:var(--accent);margin-bottom:16px;font-weight:500;line-height:1.5}
+.pending-badge{display:inline-flex;align-items:center;gap:6px;background:var(--ol);border-radius:20px;padding:6px 14px;font-size:13px;color:#A05F00;font-weight:600;margin-bottom:12px}
+.tag-mgr-add{display:flex;gap:8px;margin-top:10px}
+.tag-mgr-add input{flex:1;border:.5px solid var(--b2);border-radius:var(--rx);padding:8px 10px;font-size:14px;font-family:var(--font);outline:none;background:var(--bg);color:var(--t)}
+.tag-mgr-add button{padding:8px 14px;background:var(--accent);color:white;border:none;border-radius:var(--rx);font-size:14px;cursor:pointer;font-family:var(--font)}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-inner">
+<div class="hdr">
+  <div class="hdr-in">
     <h1>交易日志</h1>
-    <span class="header-date" id="header-date"></span>
+    <span class="hdr-date" id="hdr-date"></span>
   </div>
 </div>
 
-<div class="content">
+<div class="wrap">
 
-  <!-- TAB: 入场 -->
-  <div class="tab-panel active" id="tab-entry">
-
-    <div class="section">
-      <div class="section-header">方向</div>
-      <div class="dir-group">
-        <div class="dir-card" id="dir-long" onclick="setDir('long')">
-          <div class="dir-icon">↑</div>
-          <div class="dir-label">做多</div>
-          <div class="dir-sub">Long</div>
-        </div>
-        <div class="dir-card" id="dir-short" onclick="setDir('short')">
-          <div class="dir-icon">↓</div>
-          <div class="dir-label">做空</div>
-          <div class="dir-sub">Short</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-header">品种 & 时间</div>
-      <div class="card">
-        <div class="card-row">
-          <label>品种</label>
-          <select id="e-asset" onchange="onAssetChange()">
-            <option value="">选择</option>
-            <option value="crypto">BTC/USDT</option>
-            <option value="crypto">ETH/USDT</option>
-            <option value="crypto">SOL/USDT</option>
-            <option value="gold">黄金 XAU/USD</option>
-          </select>
-        </div>
-        <div class="card-row">
-          <label>周期</label>
-          <select id="e-tf">
-            <option>4小时</option>
-            <option>日线</option>
-            <option>1小时</option>
-            <option>15分钟</option>
-            <option>周线</option>
-          </select>
-        </div>
-        <div class="card-row">
-          <label>日期</label>
-          <input type="date" id="e-date" />
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-header">价格计算</div>
-      <div class="card" style="margin-bottom:10px;">
-        <div class="card-row">
-          <label>入场价格</label>
-          <input type="number" id="e-entry" placeholder="e.g. 95000" inputmode="decimal" oninput="calc()" />
-        </div>
-        <div class="card-row">
-          <label>止损价格</label>
-          <input type="number" id="e-slprice" placeholder="e.g. 93000" inputmode="decimal" oninput="calc()" />
-        </div>
-        <div class="card-row">
-          <label>盈亏比</label>
-          <input type="number" id="e-rr" placeholder="R:R" inputmode="decimal" step="0.5" oninput="calc()" />
-        </div>
-        <div class="card-row" id="lev-row">
-          <label>杠杆</label>
-          <input type="number" id="e-lev" placeholder="倍数" inputmode="decimal" oninput="calc()" />
-        </div>
-        <div class="card-row">
-          <label>最大亏损</label>
-          <input type="number" id="e-maxloss" placeholder="e.g. 500 (USDT/$)" inputmode="decimal" oninput="calc()" />
-        </div>
-      </div>
-      <div class="calc-result">
-        <div class="calc-item">
-          <div class="calc-val red" id="c-sl">—</div>
-          <div class="calc-lbl">止损价</div>
-          <div class="calc-sub" id="c-sl-d">—</div>
-        </div>
-        <div class="calc-item">
-          <div class="calc-val green" id="c-tp">—</div>
-          <div class="calc-lbl">目标价</div>
-          <div class="calc-sub" id="c-rr-s">—</div>
-        </div>
-        <div class="calc-item">
-          <div class="calc-val" id="c-pos" style="color:var(--accent)">—</div>
-          <div class="calc-lbl" id="c-pos-lbl">保证金</div>
-          <div class="calc-sub" id="c-risk-a">填入场信息</div>
-        </div>
-      </div>
-      <div id="risk-warning" style="display:none; margin-top:8px; background:var(--red-light); border:1px solid var(--red); border-radius:var(--radius-sm); padding:10px 14px; font-size:13px; color:#C0392B; font-weight:500; line-height:1.5;"></div>
-    </div>
-
-    <div class="section">
-      <div class="section-header">入场逻辑</div>
-      <div class="card">
-        <div class="card-textarea">
-          <label>方法 & 形态</label>
-          <textarea id="e-method" placeholder="价格行为、突破回踩、支撑阻力..."></textarea>
-        </div>
-        <div class="card-textarea" style="border-top:0.5px solid var(--border);">
-          <label>触发条件</label>
-          <textarea id="e-trigger" placeholder="为什么现在入场..."></textarea>
-        </div>
-      </div>
-      <div class="card" style="margin-top:10px;">
-        <div class="img-upload">
-          <input type="file" accept="image/*" onchange="previewImg(this,'prev-entry','img-entry-txt')" />
-          <div class="img-upload-icon">📈</div>
-          <div class="img-upload-text" id="img-entry-txt">上传入场截图</div>
-          <div class="img-upload-sub">点击选择或截图后粘贴</div>
-          <img id="prev-entry" class="img-preview" />
-        </div>
-      </div>
-    </div>
-
-    <button class="copy-btn" onclick="saveEntry()">保存入场记录</button>
-
+<!-- 入场 -->
+<div class="tab active" id="tab-entry">
+  <div id="pending-notice" style="display:none;margin-bottom:4px">
+    <div class="pending-badge">⚠ 上笔交易待复盘，请先完成复盘</div>
   </div>
 
-  <!-- TAB: 复盘 -->
-  <div class="tab-panel" id="tab-review">
-
-    <div class="section">
-      <div class="section-header">交易结果</div>
-      <div class="res-group">
-        <div class="res-card" id="rb-win" onclick="setRes('win')">
-          <div class="res-icon">✓</div>
-          <div class="res-label">盈利</div>
-        </div>
-        <div class="res-card" id="rb-loss" onclick="setRes('loss')">
-          <div class="res-icon">✕</div>
-          <div class="res-label">亏损</div>
-        </div>
-        <div class="res-card" id="rb-flat" onclick="setRes('flat')">
-          <div class="res-icon">→</div>
-          <div class="res-label">保本</div>
-        </div>
-      </div>
+  <div class="sec">
+    <div class="sec-h">方向</div>
+    <div class="dir-g">
+      <div class="dc" id="dir-long" onclick="setDir('long')"><div class="di">↑</div><div class="dl">做多</div><div class="ds">Long</div></div>
+      <div class="dc" id="dir-short" onclick="setDir('short')"><div class="di">↓</div><div class="dl">做空</div><div class="ds">Short</div></div>
     </div>
-
-    <div class="section">
-      <div class="section-header">出场数据</div>
-      <div class="card">
-        <div class="card-row">
-          <label>出场价格</label>
-          <input type="number" id="r-exit" placeholder="e.g. 98500" inputmode="decimal" oninput="calcExit()" />
-        </div>
-        <div class="card-row">
-          <label>实际盈亏</label>
-          <input type="text" id="r-pnl" placeholder="自动计算" readonly style="color:var(--text2);" />
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-header">复盘分析</div>
-      <div class="card">
-        <div class="card-textarea">
-          <label>走势与预期的差异</label>
-          <textarea id="r-diff" placeholder="实际走势和你预期有什么不同..."></textarea>
-        </div>
-        <div class="card-textarea" style="border-top:0.5px solid var(--border);">
-          <label>下次同类情况我会怎么做？</label>
-          <textarea id="r-lesson" placeholder="这次最重要的一个教训..."></textarea>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-header">情绪评分</div>
-      <div class="card">
-        <div class="emo-wrap">
-          <div class="emo-label">交易时的情绪状态</div>
-          <div class="emo-slider-row">
-            <span>情绪化</span>
-            <input type="range" min="0" max="10" value="7" id="r-emo" step="1" oninput="updateEmo(this.value)" />
-            <span>冷静</span>
-            <span class="emo-val" id="emo-out">7</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-header">出场截图</div>
-      <div class="card">
-        <div class="img-upload">
-          <input type="file" accept="image/*" onchange="previewImg(this,'prev-review','img-review-txt')" />
-          <div class="img-upload-icon">📉</div>
-          <div class="img-upload-text" id="img-review-txt">上传出场截图</div>
-          <div class="img-upload-sub">点击选择或截图后粘贴</div>
-          <img id="prev-review" class="img-preview" />
-        </div>
-      </div>
-    </div>
-
-    <button class="copy-btn green-btn" onclick="saveReview()">保存复盘记录</button>
-
   </div>
 
-  <!-- TAB: 历史 -->
-  <div class="tab-panel" id="tab-history">
-    <div class="stats-grid" id="stats-grid"></div>
-    <div id="history-list"></div>
+  <div class="sec">
+    <div class="sec-h">品种 & 时间</div>
+    <div class="card">
+      <div class="cr"><label>品种</label>
+        <select id="e-asset" onchange="onAssetChange()">
+          <option value="">选择</option>
+          <option value="BTC">BTC/USDT</option>
+          <option value="ETH">ETH/USDT</option>
+          <option value="SOL">SOL/USDT</option>
+          <option value="gold">黄金 XAU/USD</option>
+        </select>
+      </div>
+      <div class="cr"><label>周期</label>
+        <select id="e-tf"><option>4小时</option><option>日线</option><option>1小时</option><option>15分钟</option><option>周线</option></select>
+      </div>
+      <div class="cr"><label>日期</label><input type="date" id="e-date"/></div>
+    </div>
   </div>
 
-  <!-- TAB: 设置 -->
-  <div class="tab-panel" id="tab-settings">
+  <div class="sec">
+    <div class="sec-h">价格计算</div>
+    <div class="card" style="margin-bottom:10px">
+      <div class="cr"><label>入场价格</label><input type="number" id="e-entry" placeholder="e.g. 95000" inputmode="decimal" oninput="calc()"/></div>
+      <div class="cr"><label>止损价格</label><input type="number" id="e-slprice" placeholder="e.g. 93000" inputmode="decimal" oninput="calc()"/></div>
+      <div class="cr"><label>盈亏比</label><input type="number" id="e-rr" placeholder="R:R" inputmode="decimal" step="0.5" oninput="calc()"/></div>
+      <div class="cr" id="lev-row"><label>杠杆</label><input type="number" id="e-lev" placeholder="倍数" inputmode="decimal" oninput="calc()"/></div>
+      <div class="cr"><label>最大亏损</label><input type="number" id="e-maxloss" placeholder="USDT / $" inputmode="decimal" oninput="calc()"/></div>
+    </div>
+    <div class="calc-box">
+      <div class="ci"><div class="cv r" id="c-sl">—</div><div class="cl">止损价</div><div class="cs" id="c-sl-d">—</div></div>
+      <div class="ci"><div class="cv g" id="c-tp">—</div><div class="cl">目标价</div><div class="cs" id="c-rr-s">—</div></div>
+      <div class="ci"><div class="cv a" id="c-pos">—</div><div class="cl" id="c-pos-lbl">保证金</div><div class="cs" id="c-risk-a">填入场信息</div></div>
+    </div>
+    <div class="warn" id="risk-warn"></div>
+    <div class="info-box" id="risk-info"></div>
+  </div>
 
-    <div class="setup-info">设置默认盈亏比和杠杆，入场时自动套用。</div>
+  <div class="sec">
+    <div class="sec-h">入场逻辑</div>
+    <div class="card">
+      <div class="ct">
+        <label>方法 & 形态</label>
+        <div class="tag-wrap" id="method-tags"></div>
+        <textarea id="e-method" placeholder="补充说明..."></textarea>
+      </div>
+      <div class="ct" style="border-top:.5px solid var(--b)">
+        <label>触发条件</label>
+        <div class="tag-wrap" id="trigger-tags"></div>
+        <textarea id="e-trigger" placeholder="补充说明..."></textarea>
+      </div>
+    </div>
+    <div class="card" style="margin-top:10px">
+      <div class="img-up">
+        <input type="file" accept="image/*" onchange="previewImg(this,'prev-entry','img-entry-txt')"/>
+        <div class="img-up-icon">📈</div>
+        <div class="img-up-txt" id="img-entry-txt">上传入场截图</div>
+        <div class="img-up-sub">点击选择或截图后粘贴</div>
+        <img id="prev-entry" class="img-prev"/>
+      </div>
+    </div>
+  </div>
 
-    <div class="section">
-      <div class="section-header">默认参数</div>
-      <div class="card">
-        <div class="card-row">
-          <label>默认盈亏比</label>
-          <input type="number" id="s-rr" placeholder="e.g. 2" inputmode="decimal" step="0.5" oninput="saveSettings()" />
-        </div>
-        <div class="card-row">
-          <label>默认杠杆</label>
-          <input type="number" id="s-lev" placeholder="e.g. 10 (加密)" inputmode="decimal" oninput="saveSettings()" />
+  <button class="btn" onclick="saveEntry()">保存入场记录</button>
+</div>
+
+<!-- 复盘 -->
+<div class="tab" id="tab-review">
+  <div id="review-target-info" style="display:none;margin-bottom:12px">
+    <div class="card">
+      <div class="cr" style="background:var(--al)">
+        <label style="color:var(--accent);font-size:13px">正在复盘</label>
+        <span id="review-target-label" style="font-size:13px;color:var(--accent);text-align:right;flex:1"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h">交易结果</div>
+    <div class="res-g">
+      <div class="rc" id="rb-win" onclick="setRes('win')"><div class="ri">✓</div><div class="rl">盈利</div></div>
+      <div class="rc" id="rb-loss" onclick="setRes('loss')"><div class="ri">✕</div><div class="rl">亏损</div></div>
+      <div class="rc" id="rb-flat" onclick="setRes('flat')"><div class="ri">→</div><div class="rl">保本</div></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h">出场数据</div>
+    <div class="card">
+      <div class="cr"><label>出场价格</label><input type="number" id="r-exit" placeholder="e.g. 98500" inputmode="decimal" oninput="calcExit()"/></div>
+      <div class="cr"><label>实际盈亏</label><input type="text" id="r-pnl" placeholder="自动计算" readonly style="color:var(--t2)"/></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h">复盘分析</div>
+    <div class="card">
+      <div class="ct"><label>走势与预期的差异</label><textarea id="r-diff" placeholder="实际走势和预期有什么不同..."></textarea></div>
+      <div class="ct" style="border-top:.5px solid var(--b)"><label>下次同类情况我会怎么做？</label><textarea id="r-lesson" placeholder="最重要的一个教训..."></textarea></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h">情绪评分</div>
+    <div class="card">
+      <div class="emo-w">
+        <div class="emo-l">交易时的情绪状态</div>
+        <div class="emo-r">
+          <span>情绪化</span>
+          <input type="range" min="0" max="10" value="7" id="r-emo" step="1" oninput="updateEmo(this.value)"/>
+          <span>冷静</span>
+          <span class="emo-v" id="emo-out">7</span>
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="section">
-      <div class="section-header">数据</div>
-      <div class="card">
-        <div class="card-row" onclick="exportData()" style="cursor:pointer;">
-          <label>导出记录</label>
-          <span style="color:var(--accent);font-size:15px;">导出 JSON →</span>
-        </div>
-        <div class="card-row" onclick="clearData()" style="cursor:pointer;">
-          <label style="color:var(--red);">清除所有记录</label>
-          <span style="color:var(--red);font-size:15px;">清除 →</span>
+  <div class="sec">
+    <div class="sec-h">出场截图</div>
+    <div class="card">
+      <div class="img-up">
+        <input type="file" accept="image/*" onchange="previewImg(this,'prev-review','img-review-txt')"/>
+        <div class="img-up-icon">📉</div>
+        <div class="img-up-txt" id="img-review-txt">上传出场截图</div>
+        <div class="img-up-sub">点击选择或截图后粘贴</div>
+        <img id="prev-review" class="img-prev"/>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn green" onclick="saveReview()">保存复盘记录</button>
+</div>
+
+<!-- 历史 -->
+<div class="tab" id="tab-history">
+  <div class="stats-g" id="stats-grid"></div>
+  <div id="history-list"></div>
+</div>
+
+<!-- 设置 -->
+<div class="tab" id="tab-settings">
+  <div class="info-hint">设置默认参数，入场时自动套用。</div>
+  <div class="sec">
+    <div class="sec-h">默认参数</div>
+    <div class="card">
+      <div class="cr"><label>默认盈亏比</label><input type="number" id="s-rr" placeholder="e.g. 2" inputmode="decimal" step="0.5" oninput="saveSettings()"/></div>
+      <div class="cr"><label>默认杠杆</label><input type="number" id="s-lev" placeholder="e.g. 10" inputmode="decimal" oninput="saveSettings()"/></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-h">方法标签管理</div>
+    <div class="card">
+      <div style="padding:13px 16px">
+        <div class="tag-wrap" id="method-mgr"></div>
+        <div class="tag-mgr-add">
+          <input id="new-method" type="text" placeholder="添加方法标签"/>
+          <button onclick="addTag('method')">添加</button>
         </div>
       </div>
     </div>
-
   </div>
+  <div class="sec">
+    <div class="sec-h">触发条件标签管理</div>
+    <div class="card">
+      <div style="padding:13px 16px">
+        <div class="tag-wrap" id="trigger-mgr"></div>
+        <div class="tag-mgr-add">
+          <input id="new-trigger" type="text" placeholder="添加触发条件标签"/>
+          <button onclick="addTag('trigger')">添加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-h">数据</div>
+    <div class="card">
+      <div class="cr" onclick="exportExcel()" style="cursor:pointer"><label>导出 Excel (CSV)</label><span style="color:var(--accent);font-size:15px">下载 →</span></div>
+      <div class="cr" onclick="exportJSON()" style="cursor:pointer"><label>导出 JSON</label><span style="color:var(--accent);font-size:15px">下载 →</span></div>
+      <div class="cr" onclick="clearData()" style="cursor:pointer"><label style="color:var(--red)">清除所有记录</label><span style="color:var(--red);font-size:15px">清除 →</span></div>
+    </div>
+  </div>
+</div>
 
 </div>
 
-<!-- Bottom Nav -->
 <nav class="nav">
-  <div class="nav-inner">
-    <button class="nav-btn active" id="nav-entry" onclick="switchTab('entry',this)">
-      <span class="nav-icon">✦</span>
-      <span class="nav-label">入场</span>
-    </button>
-    <button class="nav-btn" id="nav-review" onclick="switchTab('review',this)">
-      <span class="nav-icon">◎</span>
-      <span class="nav-label">复盘</span>
-    </button>
-    <button class="nav-btn" id="nav-history" onclick="switchTab('history',this);renderHistory()">
-      <span class="nav-icon">▤</span>
-      <span class="nav-label">历史</span>
-    </button>
-    <button class="nav-btn" id="nav-settings" onclick="switchTab('settings',this)">
-      <span class="nav-icon">⊙</span>
-      <span class="nav-label">设置</span>
-    </button>
+  <div class="nav-in">
+    <button class="nb active" id="nav-entry" onclick="switchTab('entry',this)"><span class="ni">✦</span><span class="nl">入场</span></button>
+    <button class="nb" id="nav-review" onclick="switchTab('review',this)"><span class="ni">◎</span><span class="nl">复盘</span></button>
+    <button class="nb" id="nav-history" onclick="switchTab('history',this);renderHistory()"><span class="ni">▤</span><span class="nl">历史</span></button>
+    <button class="nb" id="nav-settings" onclick="switchTab('settings',this);renderTagMgr()"><span class="ni">⊙</span><span class="nl">设置</span></button>
   </div>
 </nav>
 
 <div class="toast" id="toast"></div>
 
 <script>
-let dirState = '';
-let resState = '';
+var dirState='',resState='',reviewTargetId=null;
+var selMethods=[],selTriggers=[];
+var CRYPTO_MIN={BTC:0.001,ETH:0.01,SOL:0.1};
+var DEF_METHODS=['价格行为PA','突破回踩','支撑阻力','趋势跟随','OB订单块','FVG缺口','双顶/双底','均线交叉'];
+var DEF_TRIGGERS=['4H收线确认','回踩获支撑','成交量放大','突破关键位','K线形态确认','背离信号','EMA支撑'];
 
-function init() {
-  const today = new Date();
-  document.getElementById('header-date').textContent = today.toLocaleDateString('zh-CN', {month:'long',day:'numeric',weekday:'short'});
-  document.getElementById('e-date').value = today.toISOString().split('T')[0];
+function G(id){return document.getElementById(id);}
+function T(id,v){G(id).textContent=v;}
+
+function init(){
+  var d=new Date();
+  G('hdr-date').textContent=d.toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'short'});
+  G('e-date').value=d.toISOString().split('T')[0];
   loadSettings();
+  renderMethodTags();
+  renderTriggerTags();
+  checkPending();
 }
 
-function switchTab(name, el) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  document.getElementById('nav-' + name).classList.add('active');
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active');});
+  G('tab-'+name).classList.add('active');
+  G('nav-'+name).classList.add('active');
 }
 
-function setDir(d) {
-  dirState = d;
-  document.getElementById('dir-long').className = 'dir-card' + (d === 'long' ? ' long-active' : '');
-  document.getElementById('dir-short').className = 'dir-card' + (d === 'short' ? ' short-active' : '');
+function setDir(d){
+  dirState=d;
+  G('dir-long').className='dc'+(d==='long'?' la':'');
+  G('dir-short').className='dc'+(d==='short'?' sa':'');
   calc();
 }
 
-function setRes(r) {
-  resState = r;
-  ['win','loss','flat'].forEach(x => {
-    document.getElementById('rb-' + x).className = 'res-card';
+function setRes(r){
+  resState=r;
+  ['win','loss','flat'].forEach(function(x){G('rb-'+x).className='rc';});
+  var m={win:'wa',loss:'la2',flat:'fa'};
+  if(r) G('rb-'+r).className='rc '+m[r];
+}
+
+function updateEmo(v){
+  G('emo-out').textContent=v;
+  var pct=v/10*100;
+  G('r-emo').style.background='linear-gradient(to right,var(--accent) 0%,var(--accent) '+pct+'%,var(--b2) '+pct+'%)';
+}
+
+function getAssetType(){
+  var v=G('e-asset').value;
+  if(v==='gold') return 'gold';
+  if(CRYPTO_MIN[v]) return 'crypto';
+  return '';
+}
+
+function onAssetChange(){
+  var t=getAssetType();
+  G('lev-row').style.display=t==='gold'?'none':'flex';
+  G('c-pos-lbl').textContent=t==='gold'?'手数 (lots)':'保证金 (USDT)';
+  calc();
+}
+
+function calc(){
+  var entry=parseFloat(G('e-entry').value);
+  var slPrice=parseFloat(G('e-slprice').value);
+  var rr=parseFloat(G('e-rr').value)||2;
+  var maxLoss=parseFloat(G('e-maxloss').value);
+  var isShort=dirState==='short';
+  var type=getAssetType();
+  var warn=G('risk-warn'),info=G('risk-info');
+
+  function reset(){
+    ['c-sl','c-tp','c-pos'].forEach(function(id){T(id,'—');});
+    T('c-sl-d','—');T('c-rr-s','—');T('c-risk-a','填入场信息');
+    warn.style.display='none';info.style.display='none';
+  }
+
+  if(!entry||!slPrice){reset();return;}
+  if(dirState==='long'&&slPrice>=entry){reset();T('c-sl-d','止损价应低于入场价');return;}
+  if(dirState==='short'&&slPrice<=entry){reset();T('c-sl-d','止损价应高于入场价');return;}
+
+  var slDist=Math.abs(entry-slPrice);
+  var tpPrice=isShort?entry-slDist*rr:entry+slDist*rr;
+
+  T('c-sl',slPrice>=100?slPrice.toFixed(2):slPrice.toFixed(4));
+  T('c-tp',tpPrice>=100?tpPrice.toFixed(2):tpPrice.toFixed(4));
+  T('c-rr-s','1 : '+rr);
+
+  if(type==='gold'){
+    var slPct=(slDist/entry*100).toFixed(2);
+    T('c-sl-d','$'+slDist.toFixed(2)+' / '+slPct+'%');
+    if(maxLoss){
+      var minRisk=slDist*0.01*100;
+      if(maxLoss<minRisk){
+        T('c-pos','—');T('c-risk-a','无法开仓');
+        warn.textContent='⚠️ 最大亏损 $'+maxLoss.toFixed(2)+' 不足以开最小仓位（0.01手）。按当前止损位，最小风险为 $'+minRisk.toFixed(2)+'，请调高最大亏损。';
+        warn.style.display='block';info.style.display='none';
+      } else {
+        var rawLots=maxLoss/(slDist*100);
+        var lots=Math.floor(rawLots*100)/100;
+        var actualRisk=slDist*lots*100;
+        T('c-pos',lots.toFixed(2)+' 手');
+        T('c-risk-a','实际最大亏 $'+actualRisk.toFixed(2));
+        warn.style.display='none';
+        if(actualRisk<maxLoss*0.95){
+          info.textContent='ℹ️ 手数已向下取整至 '+lots.toFixed(2)+' 手，实际最大亏损为 $'+actualRisk.toFixed(2)+'（略小于设定的 $'+maxLoss.toFixed(2)+'）。';
+          info.style.display='block';
+        } else {info.style.display='none';}
+      }
+    } else {T('c-pos','—');T('c-risk-a','填最大亏损');warn.style.display='none';info.style.display='none';}
+  } else {
+    var lev=parseFloat(G('e-lev').value)||10;
+    var slPctC=slDist/entry*100;
+    T('c-sl-d',(isShort?'+':'-')+slPctC.toFixed(2)+'%');
+    if(maxLoss){
+      var sym=G('e-asset').value;
+      var minQty=CRYPTO_MIN[sym]||0.001;
+      var minRiskC=slDist*minQty;
+      if(maxLoss<minRiskC){
+        T('c-pos','—');T('c-risk-a','无法开仓');
+        warn.textContent='⚠️ 最大亏损 '+maxLoss.toFixed(2)+' U 不足以开最小仓位（'+minQty+' '+sym+'）。最小风险为 '+minRiskC.toFixed(2)+' U。';
+        warn.style.display='block';info.style.display='none';
+      } else {
+        var rawQty=maxLoss/slDist;
+        var qty=Math.floor(rawQty/minQty)*minQty;
+        var actualRiskC=slDist*qty;
+        var margin=qty*entry/lev;
+        T('c-pos',margin.toFixed(2)+' U');
+        T('c-risk-a','实际最大亏 '+actualRiskC.toFixed(2)+' U');
+        warn.style.display='none';
+        if(lev>50){
+          warn.textContent='⚠️ 杠杆 '+lev+'x 偏高，爆仓风险较大，请确认是否合理。';
+          warn.style.display='block';info.style.display='none';
+        } else if(actualRiskC<maxLoss*0.95){
+          info.textContent='ℹ️ 数量已向下取整，实际最大亏损为 '+actualRiskC.toFixed(2)+' U（略小于设定的 '+maxLoss.toFixed(2)+' U）。';
+          info.style.display='block';
+        } else {info.style.display='none';}
+      }
+    } else {T('c-pos','—');T('c-risk-a','填最大亏损');warn.style.display='none';info.style.display='none';}
+  }
+}
+
+function calcExit(){
+  var entry=parseFloat(G('e-entry').value);
+  var slPrice=parseFloat(G('e-slprice').value);
+  var exit=parseFloat(G('r-exit').value);
+  var maxLoss=parseFloat(G('e-maxloss').value);
+  var type=getAssetType();
+  if(!entry||!exit) return;
+  var isShort=dirState==='short';
+  var slDist=slPrice?Math.abs(entry-slPrice):1;
+  if(type==='gold'){
+    var lotsText=G('c-pos').textContent;
+    var lots=parseFloat(lotsText)||0;
+    var pnlPerOz=isShort?(entry-exit):(exit-entry);
+    var pnlAmt=pnlPerOz*lots*100;
+    var rA=maxLoss?(pnlAmt/maxLoss).toFixed(2):'—';
+    G('r-pnl').value='$'+pnlAmt.toFixed(2)+' ('+rA+'R)';
+  } else {
+    var pnlPct=isShort?(entry-exit)/entry*100:(exit-entry)/entry*100;
+    var slPct=slDist/entry*100;
+    var rA2=slPct>0?(pnlPct/slPct).toFixed(2):'—';
+    var lev=parseFloat(G('e-lev').value)||10;
+    var mText=G('c-pos').textContent;
+    var margin=parseFloat(mText)||0;
+    var pnlAmt2=margin*lev*(pnlPct/100);
+    var pStr=pnlAmt2?' / '+(pnlAmt2>=0?'+':'')+pnlAmt2.toFixed(2)+' U':'';
+    G('r-pnl').value=pnlPct.toFixed(2)+'%'+pStr+' ('+rA2+'R)';
+  }
+}
+
+// Tags
+function getTags(type){
+  try{return JSON.parse(localStorage.getItem('tj_'+type+'s')||'null')||(type==='method'?DEF_METHODS:DEF_TRIGGERS);}
+  catch(e){return type==='method'?DEF_METHODS:DEF_TRIGGERS;}
+}
+function saveTags(type,tags){localStorage.setItem('tj_'+type+'s',JSON.stringify(tags));}
+
+function renderMethodTags(){
+  var tags=getTags('method');
+  var wrap=G('method-tags'); if(!wrap) return;
+  wrap.innerHTML=tags.map(function(t){
+    var sel=selMethods.indexOf(t)>=0;
+    return '<span class="tag'+(sel?' sel':'')+'" onclick="toggleTag(\'method\',\''+t.replace(/'/g,"\\'")+'\')">'+(sel?'✓ ':'')+t+'</span>';
+  }).join('');
+}
+function renderTriggerTags(){
+  var tags=getTags('trigger');
+  var wrap=G('trigger-tags'); if(!wrap) return;
+  wrap.innerHTML=tags.map(function(t){
+    var sel=selTriggers.indexOf(t)>=0;
+    return '<span class="tag'+(sel?' sel':'')+'" onclick="toggleTag(\'trigger\',\''+t.replace(/'/g,"\\'")+'\')">'+(sel?'✓ ':'')+t+'</span>';
+  }).join('');
+}
+
+function toggleTag(type,t){
+  var arr=type==='method'?selMethods:selTriggers;
+  var i=arr.indexOf(t);
+  if(i>=0) arr.splice(i,1); else arr.push(t);
+  if(type==='method'){renderMethodTags();G('e-method').value=selMethods.join('、');}
+  else{renderTriggerTags();G('e-trigger').value=selTriggers.join('、');}
+}
+
+function renderTagMgr(){
+  ['method','trigger'].forEach(function(type){
+    var tags=getTags(type);
+    G(type+'-mgr').innerHTML=tags.map(function(t,i){
+      return '<span class="tag" style="cursor:pointer" onclick="removeTag(\''+type+'\','+i+')">'+t+' ✕</span>';
+    }).join('');
   });
-  document.getElementById('rb-' + r).className = 'res-card ' + r + '-active';
 }
 
-function updateEmo(v) {
-  document.getElementById('emo-out').textContent = v;
-  const pct = v / 10 * 100;
-  document.getElementById('r-emo').style.background =
-    `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, var(--border2) ${pct}%)`;
+function addTag(type){
+  var inp=G('new-'+type);
+  var v=inp.value.trim(); if(!v) return;
+  var tags=getTags(type); tags.push(v);
+  saveTags(type,tags); inp.value='';
+  renderTagMgr();
+  if(type==='method') renderMethodTags(); else renderTriggerTags();
 }
 
-function getAssetType() {
-  const sel = document.getElementById('e-asset');
-  const opt = sel.options[sel.selectedIndex];
-  return opt ? opt.value : '';
+function removeTag(type,i){
+  var tags=getTags(type); tags.splice(i,1);
+  saveTags(type,tags); renderTagMgr();
+  if(type==='method') renderMethodTags(); else renderTriggerTags();
 }
 
-function onAssetChange() {
-  const type = getAssetType();
-  const levRow = document.getElementById('lev-row');
-  const posLbl = document.getElementById('c-pos-lbl');
-  if (type === 'gold') {
-    levRow.style.display = 'none';
-    posLbl.textContent = '手数 (lots)';
-  } else {
-    levRow.style.display = 'flex';
-    posLbl.textContent = '保证金 (USDT)';
+// Pending
+function checkPending(){
+  var records=getRecords();
+  var pending=records.find(function(r){return r.status==='open';});
+  G('pending-notice').style.display=pending?'block':'none';
+}
+
+function getV(id){return G(id).value||'';}
+
+function saveEntry(){
+  if(!getV('e-asset')){showToast('请选择交易品种');return;}
+  if(!dirState){showToast('请选择做多或做空');return;}
+  if(!getV('e-entry')){showToast('请填写入场价格');return;}
+
+  var records=getRecords();
+  var pending=records.find(function(r){return r.status==='open';});
+  if(pending){
+    showToast('上笔 '+pending.asset+' ('+pending.date+') 尚未复盘\n请先完成复盘再记录新交易');
+    return;
   }
-  calc();
-}
 
-function calc() {
-  const entry = parseFloat(document.getElementById('e-entry').value);
-  const slPrice = parseFloat(document.getElementById('e-slprice').value);
-  const rr = parseFloat(document.getElementById('e-rr').value) || 2;
-  const maxLoss = parseFloat(document.getElementById('e-maxloss').value);
-  const isShort = dirState === 'short';
-  const type = getAssetType();
-  const warning = document.getElementById('risk-warning');
-
-  const reset = () => {
-    ['c-sl','c-tp','c-pos'].forEach(id => document.getElementById(id).textContent = '—');
-    document.getElementById('c-sl-d').textContent = '—';
-    document.getElementById('c-rr-s').textContent = '—';
-    document.getElementById('c-risk-a').textContent = '填入场信息';
-    warning.style.display = 'none';
+  var record={
+    id:Date.now(),date:getV('e-date'),asset:getV('e-asset'),tf:getV('e-tf'),dir:dirState,
+    entry:getV('e-entry'),slprice:getV('e-slprice'),maxloss:getV('e-maxloss'),rr:getV('e-rr'),lev:getV('e-lev'),
+    slDisplay:G('c-sl').textContent,tpDisplay:G('c-tp').textContent,
+    posDisplay:G('c-pos').textContent,slDist:G('c-sl-d').textContent,
+    method:getV('e-method'),trigger:getV('e-trigger'),
+    status:'open',result:'',exit:'',pnl:'',diff:'',lesson:'',emo:'',
+    savedAt:new Date().toISOString()
   };
+  records.unshift(record);
+  saveRecords(records);
 
-  const showWarning = (msg) => { warning.textContent = msg; warning.style.display = 'block'; };
-  const hideWarning = () => { warning.style.display = 'none'; };
+  var dirTxt=dirState==='long'?'做多':'做空';
+  var posLbl=G('c-pos-lbl').textContent;
+  var text='【入场记录】'+record.date+'\n品种：'+record.asset+'　方向：'+dirTxt+'　周期：'+record.tf+'\n入场：'+record.entry+'　止损价：'+record.slDisplay+'　目标价：'+record.tpDisplay+'\n止损距离：'+record.slDist+'　最大亏损：'+(record.maxloss||'—')+'\n'+posLbl+'：'+record.posDisplay+'\n方法：'+(record.method||'—')+'\n触发：'+(record.trigger||'—');
+  copyText(text);
+  showToast('已保存并复制 ✓');
+  checkPending();
+  selMethods=[];selTriggers=[];
+  renderMethodTags();renderTriggerTags();
+  G('e-method').value='';G('e-trigger').value='';
+}
 
-  if (!entry || !slPrice) { reset(); return; }
+function saveReview(){
+  var records=getRecords();
+  if(!records.length){showToast('请先记录入场');return;}
+  var target;
+  if(reviewTargetId) target=records.find(function(r){return r.id===reviewTargetId;});
+  if(!target) target=records.find(function(r){return r.status==='open';});
+  if(!target){showToast('没有待复盘的交易');return;}
 
-  if (dirState === 'long' && slPrice >= entry) { reset(); document.getElementById('c-sl-d').textContent = '止损价应低于入场价'; return; }
-  if (dirState === 'short' && slPrice <= entry) { reset(); document.getElementById('c-sl-d').textContent = '止损价应高于入场价'; return; }
+  target.result=resState;
+  target.exit=getV('r-exit');
+  target.pnl=getV('r-pnl');
+  target.diff=getV('r-diff');
+  target.lesson=getV('r-lesson');
+  target.emo=G('r-emo').value;
+  target.status=resState||'open';
+  saveRecords(records);
 
-  const slDist = Math.abs(entry - slPrice);
-  const tpPrice = isShort ? entry - slDist * rr : entry + slDist * rr;
+  var dirTxt=target.dir==='long'?'做多':'做空';
+  var resMap={win:'盈利',loss:'亏损',flat:'保本/小亏'};
+  var text='【完整交易记录】'+target.date+'\n品种：'+target.asset+'　方向：'+dirTxt+'　周期：'+target.tf+'\n入场：'+target.entry+'　止损价：'+target.slDisplay+'　目标价：'+target.tpDisplay+'\n─────\n结果：'+(resMap[resState]||'—')+'\n出场：'+(target.exit||'—')+'　盈亏：'+(target.pnl||'—')+'\n差异：'+(target.diff||'—')+'\n下次：'+(target.lesson||'—')+'\n情绪：'+target.emo+'/10';
+  copyText(text);
+  reviewTargetId=null;
+  G('review-target-info').style.display='none';
+  showToast('复盘已保存并复制 ✓');
+  checkPending();
+}
 
-  document.getElementById('c-sl').textContent = slPrice >= 100 ? slPrice.toFixed(2) : slPrice.toFixed(4);
-  document.getElementById('c-tp').textContent = tpPrice >= 100 ? tpPrice.toFixed(2) : tpPrice.toFixed(4);
-  document.getElementById('c-rr-s').textContent = '1 : ' + rr;
+function renderHistory(){
+  var records=getRecords();
+  var grid=G('stats-grid'),list=G('history-list');
+  var closed=records.filter(function(r){return r.result;});
+  var wins=closed.filter(function(r){return r.result==='win';});
+  var losses=closed.filter(function(r){return r.result==='loss';});
+  var total=closed.length;
+  var winRate=total?Math.round(wins.length/total*100):0;
 
-  if (type === 'gold') {
-    const slPct = (slDist / entry * 100).toFixed(2);
-    document.getElementById('c-sl-d').textContent = '$' + slDist.toFixed(2) + ' / ' + slPct + '%';
+  function avgR(arr){
+    if(!arr.length) return 0;
+    return (arr.reduce(function(s,r){var m=r.pnl&&r.pnl.match(/([\d.]+)R/);return s+(m?parseFloat(m[1]):1);},0)/arr.length).toFixed(2);
+  }
+  var avgWR=avgR(wins), avgLR=avgR(losses);
+  var exp=total?((wins.length/total*parseFloat(avgWR))-(losses.length/total*parseFloat(avgLR))).toFixed(2):0;
 
-    if (maxLoss) {
-      const lots = maxLoss / (slDist * 100);
-      document.getElementById('c-pos').textContent = lots.toFixed(2) + ' 手';
-      document.getElementById('c-risk-a').textContent = '最大亏 $' + maxLoss.toFixed(0);
+  var maxCL=0,curCL=0;
+  records.slice().reverse().forEach(function(r){if(r.result==='loss'){curCL++;maxCL=Math.max(maxCL,curCL);}else{curCL=0;}});
 
-      // warn if lots is unusually large (e.g. stop too tight relative to maxLoss)
-      if (lots > 100) {
-        showWarning('⚠️ 手数异常偏大（' + lots.toFixed(2) + ' 手），请确认止损价是否设置正确。');
-      } else if (slDist < 0.5) {
-        showWarning('⚠️ 止损距离仅 $' + slDist.toFixed(2) + '，止损位可能设置过紧，容易被扫损。');
-      } else {
-        hideWarning();
-      }
-    } else {
-      document.getElementById('c-pos').textContent = '—';
-      document.getElementById('c-risk-a').textContent = '填最大亏损';
-      hideWarning();
-    }
-  } else {
-    const lev = parseFloat(document.getElementById('e-lev').value) || 10;
-    const slPct = slDist / entry * 100;
-    document.getElementById('c-sl-d').textContent = (isShort ? '+' : '-') + slPct.toFixed(2) + '%';
+  grid.innerHTML=
+    '<div class="stat-c"><div class="sv">'+records.length+'</div><div class="sl">总交易次数</div><div class="sd">含未复盘</div></div>'+
+    '<div class="stat-c"><div class="sv '+(winRate>=50?'g':'r')+'">'+winRate+'%</div><div class="sl">胜率</div><div class="sd">已复盘 '+total+' 笔</div></div>'+
+    '<div class="stat-c"><div class="sv g">'+wins.length+'</div><div class="sl">盈利次数</div><div class="sd">平均 '+avgWR+'R</div></div>'+
+    '<div class="stat-c"><div class="sv r">'+losses.length+'</div><div class="sl">亏损次数</div><div class="sd">平均 '+avgLR+'R</div></div>'+
+    '<div class="stat-c"><div class="sv '+(exp>0?'g':'r')+'">'+exp+'R</div><div class="sl">期望值</div><div class="sd">每笔平均期望收益<br>正数表示系统有优势</div></div>'+
+    '<div class="stat-c"><div class="sv r">'+maxCL+'</div><div class="sl">最大连续亏损</div><div class="sd">连续亏损笔数峰值</div></div>';
 
-    if (maxLoss) {
-      const posVal = maxLoss / (slPct / 100);
-      const margin = posVal / lev;
+  if(!records.length){list.innerHTML='<div class="empty">还没有交易记录<br>从入场开始记录吧</div>';return;}
+  var dirMap={long:'做多 ↑',short:'做空 ↓'};
+  var resMap2={win:'盈利',loss:'亏损',flat:'保本',open:'持仓中','':`持仓中`};
+  list.innerHTML=records.map(function(r){
+    var pnlClass=r.result==='win'?' g':r.result==='loss'?' r':'';
+    return '<div class="hi" onclick="openReview('+r.id+')"><div class="hi-dot '+(r.status==='open'?'open':r.result||'open')+'"></div><div class="hi-info"><div class="hi-top"><span class="hi-asset">'+(r.asset||'—')+'</span><span class="hi-pnl'+pnlClass+'">'+(r.pnl||resMap2[r.status])+'</span></div><div class="hi-bot"><span class="hi-date">'+r.date+'</span><span class="hi-dir">'+(dirMap[r.dir]||'—')+' · '+(r.tf||'')+'</span></div></div></div>';
+  }).join('');
+}
 
-      document.getElementById('c-pos').textContent = margin.toFixed(2) + ' U';
-      document.getElementById('c-risk-a').textContent = '最大亏 ' + maxLoss.toFixed(0) + ' U';
+function openReview(id){
+  var records=getRecords();
+  var r=records.find(function(x){return x.id===id;});
+  if(!r) return;
+  reviewTargetId=id;
+  G('e-entry').value=r.entry||'';
+  G('e-slprice').value=r.slprice||'';
+  G('e-maxloss').value=r.maxloss||'';
+  G('e-lev').value=r.lev||'';
+  G('e-rr').value=r.rr||'';
+  dirState=r.dir||'';
+  setRes(r.result||'');
+  G('r-exit').value=r.exit||'';
+  G('r-pnl').value=r.pnl||'';
+  G('r-diff').value=r.diff||'';
+  G('r-lesson').value=r.lesson||'';
+  if(r.emo){G('r-emo').value=r.emo;updateEmo(r.emo);}
+  var dirTxt=r.dir==='long'?'做多':'做空';
+  G('review-target-label').textContent=r.asset+' '+dirTxt+' '+r.date;
+  G('review-target-info').style.display='block';
+  switchTab('review',G('nav-review'));
+}
 
-      if (slPct < 0.3) {
-        showWarning('⚠️ 止损距离仅 ' + slPct.toFixed(2) + '%，止损位可能设置过紧，容易被扫损。');
-      } else if (lev > 50) {
-        showWarning('⚠️ 杠杆 ' + lev + 'x 偏高，爆仓风险较大，请确认是否合理。');
-      } else {
-        hideWarning();
-      }
-    } else {
-      document.getElementById('c-pos').textContent = '—';
-      document.getElementById('c-risk-a').textContent = '填最大亏损';
-      hideWarning();
-    }
+function getRecords(){try{return JSON.parse(localStorage.getItem('tj_records')||'[]');}catch(e){return[];}}
+function saveRecords(r){try{localStorage.setItem('tj_records',JSON.stringify(r));}catch(e){}}
+
+function loadSettings(){
+  try{
+    var s=JSON.parse(localStorage.getItem('tj_settings')||'{}');
+    if(s.rr) G('s-rr').value=s.rr;
+    if(s.lev) G('s-lev').value=s.lev;
+    G('e-rr').value=s.rr||2;
+    G('e-lev').value=s.lev||10;
+  }catch(e){}
+}
+function saveSettings(){
+  try{
+    var s={rr:G('s-rr').value,lev:G('s-lev').value};
+    localStorage.setItem('tj_settings',JSON.stringify(s));
+    G('e-rr').value=s.rr;G('e-lev').value=s.lev;calc();
+  }catch(e){}
+}
+
+function exportExcel(){
+  var records=getRecords();
+  if(!records.length){showToast('暂无记录');return;}
+  var headers=['日期','品种','方向','周期','入场价','止损价格','止损价(计算)','目标价','止损距离','最大亏损','仓位/保证金','盈亏比','杠杆','结果','出场价','盈亏','差异','教训','情绪','保存时间'];
+  var dm={long:'做多',short:'做空'};
+  var rm={win:'盈利',loss:'亏损',flat:'保本',open:'持仓中','':`持仓中`};
+  var rows=records.map(function(r){
+    return [r.date,r.asset,dm[r.dir]||'',r.tf,r.entry,r.slprice,r.slDisplay||'',r.tpDisplay||'',r.slDist||'',r.maxloss||'',r.posDisplay||'',r.rr||'',r.lev||'',rm[r.result]||rm[r.status],r.exit||'',r.pnl||'',r.diff||'',r.lesson||'',r.emo||'',r.savedAt||''];
+  });
+  var BOM='\uFEFF';
+  var csv=BOM+[headers].concat(rows).map(function(row){
+    return row.map(function(v){
+      var s=String(v||'').replace(/"/g,'""');
+      return (s.indexOf(',')>=0||s.indexOf('\n')>=0||s.indexOf('"')>=0)?'"'+s+'"':s;
+    }).join(',');
+  }).join('\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='交易日志_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();URL.revokeObjectURL(url);
+  showToast('Excel已下载');
+}
+
+function exportJSON(){
+  var records=getRecords();
+  if(!records.length){showToast('暂无记录');return;}
+  var blob=new Blob([JSON.stringify(records,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='交易日志_'+new Date().toISOString().split('T')[0]+'.json';
+  a.click();URL.revokeObjectURL(url);
+  showToast('JSON已下载');
+}
+
+function clearData(){
+  if(confirm('确定要清除所有交易记录吗？此操作不可恢复。')){
+    localStorage.removeItem('tj_records');
+    renderHistory();checkPending();showToast('已清除');
   }
 }
 
-function calcExit() {
-  const entry = parseFloat(document.getElementById('e-entry').value);
-  const slPrice = parseFloat(document.getElementById('e-slprice').value);
-  const exit = parseFloat(document.getElementById('r-exit').value);
-  const maxLoss = parseFloat(document.getElementById('e-maxloss').value);
-  const type = getAssetType();
-  if (!entry || !exit) return;
-  const isShort = dirState === 'short';
-  const slDist = slPrice ? Math.abs(entry - slPrice) : 1;
-
-  if (type === 'gold') {
-    const lots = parseFloat(document.getElementById('c-pos').textContent) || 0;
-    const pnlPerOz = isShort ? (entry - exit) : (exit - entry);
-    const pnlAmt = pnlPerOz * lots * 100;
-    const rActual = maxLoss ? (pnlAmt / maxLoss).toFixed(2) : '—';
-    document.getElementById('r-pnl').value = '$' + pnlAmt.toFixed(0) + ' (' + rActual + 'R)';
-  } else {
-    const pnlPct = isShort ? (entry - exit) / entry * 100 : (exit - entry) / entry * 100;
-    const slPct = slDist / entry * 100;
-    const rActual = (pnlPct / slPct).toFixed(2);
-    document.getElementById('r-pnl').value = pnlPct.toFixed(2) + '% (' + rActual + 'R)';
-  }
-}
-
-function previewImg(input, imgId, txtId) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = document.getElementById(imgId);
-    img.src = e.target.result;
-    img.style.display = 'block';
-    document.getElementById(txtId).textContent = '点击更换截图';
-  };
+function previewImg(input,imgId,txtId){
+  var file=input.files[0];if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){G(imgId).src=e.target.result;G(imgId).style.display='block';G(txtId).textContent='点击更换截图';};
   reader.readAsDataURL(file);
 }
 
-document.addEventListener('paste', e => {
-  const items = e.clipboardData && e.clipboardData.items;
-  if (!items) return;
-  for (let i = 0; i < items.length; i++) {
-    if (items[i].type.indexOf('image') !== -1) {
-      const file = items[i].getAsFile();
-      const reader = new FileReader();
-      const isReview = document.getElementById('tab-review').classList.contains('active');
-      const imgId = isReview ? 'prev-review' : 'prev-entry';
-      const txtId = isReview ? 'img-review-txt' : 'img-entry-txt';
-      reader.onload = ev => {
-        const img = document.getElementById(imgId);
-        img.src = ev.target.result;
-        img.style.display = 'block';
-        document.getElementById(txtId).textContent = '点击更换截图';
-      };
+document.addEventListener('paste',function(e){
+  var items=e.clipboardData&&e.clipboardData.items;if(!items) return;
+  for(var i=0;i<items.length;i++){
+    if(items[i].type.indexOf('image')!==-1){
+      var file=items[i].getAsFile();
+      var reader=new FileReader();
+      var isR=G('tab-review').classList.contains('active');
+      var imgId=isR?'prev-review':'prev-entry';
+      var txtId=isR?'img-review-txt':'img-entry-txt';
+      (function(iid,tid){
+        reader.onload=function(ev){G(iid).src=ev.target.result;G(iid).style.display='block';G(tid).textContent='点击更换截图';};
+      })(imgId,txtId);
       reader.readAsDataURL(file);
     }
   }
 });
 
-function getVal(id) { return document.getElementById(id).value || ''; }
-
-function saveEntry() {
-  if (!getVal('e-asset')) { showToast('请选择交易品种'); return; }
-  if (!dirState) { showToast('请选择做多或做空'); return; }
-  if (!getVal('e-entry')) { showToast('请填写入场价格'); return; }
-
-  const records = getRecords();
-  const id = Date.now();
-  const record = {
-    id,
-    date: getVal('e-date'),
-    asset: getVal('e-asset'),
-    tf: getVal('e-tf'),
-    dir: dirState,
-    entry: getVal('e-entry'),
-    slprice: getVal('e-slprice'),
-    maxloss: getVal('e-maxloss'),
-    method: getVal('e-method'),
-    trigger: getVal('e-trigger'),
-    status: 'open',
-    result: '',
-    exit: '',
-    pnl: '',
-    diff: '',
-    lesson: '',
-    emo: '',
-    savedAt: new Date().toISOString()
-  };
-  records.unshift(record);
-  saveRecords(records);
-
-  const dirTxt = dirState === 'long' ? '做多' : '做空';
-  const slPriceDisplay = document.getElementById('c-sl').textContent;
-  const tpPriceDisplay = document.getElementById('c-tp').textContent;
-  const posDisplay = document.getElementById('c-pos').textContent;
-  const posLbl = document.getElementById('c-pos-lbl').textContent;
-  const type = getAssetType();
-  const slUnit = type === 'gold' ? '止损价 $' + record.slprice : '止损价 ' + record.slprice;
-  const text = `【入场记录】${record.date}
-品种：${record.asset}　方向：${dirTxt}　周期：${record.tf}
-入场：${record.entry}　${slUnit}　目标价：${tpPriceDisplay}
-止损距离：${document.getElementById('c-sl-d').textContent}　最大亏损：${record.maxloss || '—'}
-${posLbl}：${posDisplay}
-方法：${record.method || '—'}
-触发：${record.trigger || '—'}`;
-  copyText(text);
-  showToast('已保存并复制 ✓');
+function copyText(text){
+  try{navigator.clipboard.writeText(text);}
+  catch(e){var ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
 }
 
-function saveReview() {
-  const records = getRecords();
-  if (!records.length) { showToast('请先记录入场'); return; }
-  const latest = records[0];
-
-  latest.result = resState;
-  latest.exit = getVal('r-exit');
-  latest.pnl = getVal('r-pnl');
-  latest.diff = getVal('r-diff');
-  latest.lesson = getVal('r-lesson');
-  latest.emo = document.getElementById('r-emo').value;
-  latest.status = resState || 'open';
-  saveRecords(records);
-
-  const dirTxt = latest.dir === 'long' ? '做多' : '做空';
-  const resMap = { win: '盈利', loss: '亏损', flat: '保本/小亏' };
-  const text = `【完整交易记录】${latest.date}
-品种：${latest.asset}　方向：${dirTxt}　周期：${latest.tf}
-入场：${latest.entry}　止损：${latest.sl}　目标：${latest.tp}
-─────
-结果：${resMap[resState] || '—'}
-出场：${latest.exit || '—'}　盈亏：${latest.pnl || '—'}
-差异：${latest.diff || '—'}
-下次：${latest.lesson || '—'}
-情绪：${latest.emo}/10`;
-  copyText(text);
-  showToast('复盘已保存并复制 ✓');
-}
-
-function renderHistory() {
-  const records = getRecords();
-  const grid = document.getElementById('stats-grid');
-  const list = document.getElementById('history-list');
-
-  const total = records.length;
-  const wins = records.filter(r => r.result === 'win').length;
-  const losses = records.filter(r => r.result === 'loss').length;
-  const winRate = total ? Math.round(wins / (wins + losses) * 100) || 0 : 0;
-
-  grid.innerHTML = `
-    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">总交易次数</div></div>
-    <div class="stat-card"><div class="stat-val ${winRate >= 50 ? 'green' : 'red'}">${winRate}%</div><div class="stat-lbl">胜率</div></div>
-    <div class="stat-card"><div class="stat-val green">${wins}</div><div class="stat-lbl">盈利次数</div></div>
-    <div class="stat-card"><div class="stat-val red">${losses}</div><div class="stat-lbl">亏损次数</div></div>
-  `;
-
-  if (!records.length) {
-    list.innerHTML = '<div class="history-empty">还没有交易记录<br>从入场开始记录吧</div>';
-    return;
-  }
-
-  const colorMap = { win: 'win', loss: 'loss', flat: 'flat', open: 'open' };
-  const resMap = { win: '盈利', loss: '亏损', flat: '保本', open: '持仓中', '': '持仓中' };
-  const dirMap = { long: '做多 ↑', short: '做空 ↓' };
-
-  list.innerHTML = records.map(r => `
-    <div class="history-item">
-      <div class="history-dot ${colorMap[r.status] || 'open'}"></div>
-      <div class="history-info">
-        <div class="history-top">
-          <span class="history-asset">${r.asset || '—'}</span>
-          <span class="history-pnl ${r.result === 'win' ? 'green' : r.result === 'loss' ? 'red' : ''}">${r.pnl || resMap[r.status]}</span>
-        </div>
-        <div class="history-bottom">
-          <span class="history-date">${r.date}</span>
-          <span class="history-dir">${dirMap[r.dir] || '—'} · ${r.tf || ''}</span>
-        </div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function loadSettings() {
-  try {
-    const s = JSON.parse(localStorage.getItem('tj_settings') || '{}');
-    if (s.rr) document.getElementById('s-rr').value = s.rr;
-    if (s.lev) document.getElementById('s-lev').value = s.lev;
-    document.getElementById('e-rr').value = s.rr || 2;
-    document.getElementById('e-lev').value = s.lev || 10;
-  } catch(e) {}
-}
-
-function saveSettings() {
-  try {
-    const s = {
-      rr: document.getElementById('s-rr').value,
-      lev: document.getElementById('s-lev').value
-    };
-    localStorage.setItem('tj_settings', JSON.stringify(s));
-    document.getElementById('e-rr').value = s.rr;
-    document.getElementById('e-lev').value = s.lev;
-    calc();
-  } catch(e) {}
-}
-
-function getRecords() {
-  try { return JSON.parse(localStorage.getItem('tj_records') || '[]'); } catch(e) { return []; }
-}
-function saveRecords(r) {
-  try { localStorage.setItem('tj_records', JSON.stringify(r)); } catch(e) {}
-}
-
-function exportData() {
-  const records = getRecords();
-  const text = records.map(r => {
-    const dirTxt = r.dir === 'long' ? '做多' : '做空';
-    const resMap = { win: '盈利', loss: '亏损', flat: '保本', open: '持仓中', '': '持仓中' };
-    return `【${r.date}】${r.asset} ${dirTxt}
-入场：${r.entry}　止损：${r.sl}　目标：${r.tp}
-结果：${resMap[r.status]}　出场：${r.exit || '—'}　盈亏：${r.pnl || '—'}
-方法：${r.method || '—'}
-触发：${r.trigger || '—'}
-差异：${r.diff || '—'}
-下次：${r.lesson || '—'}
-情绪：${r.emo || '—'}/10
-`;
-  }).join('\n---\n\n');
-  copyText(text || '暂无记录');
-  showToast('已复制全部记录');
-}
-
-function clearData() {
-  if (confirm('确定要清除所有交易记录吗？此操作不可恢复。')) {
-    localStorage.removeItem('tj_records');
-    renderHistory();
-    showToast('已清除');
-  }
-}
-
-function copyText(text) {
-  try {
-    navigator.clipboard.writeText(text);
-  } catch(e) {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-  }
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
+var _toastTimer;
+function showToast(msg){
+  var t=G('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(_toastTimer);_toastTimer=setTimeout(function(){t.classList.remove('show');},2800);
 }
 
 init();
