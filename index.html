@@ -329,16 +329,12 @@ input[type=range]::-webkit-slider-thumb {
       <div class="card">
         <div class="card-row">
           <label>品种</label>
-          <select id="e-asset" onchange="calc()">
+          <select id="e-asset" onchange="onAssetChange()">
             <option value="">选择</option>
-            <option>BTC/USDT</option>
-            <option>ETH/USDT</option>
-            <option>SOL/USDT</option>
-            <option>黄金 XAU/USD</option>
-            <option>纳斯达克 NQ</option>
-            <option>标普500 ES</option>
-            <option>A股</option>
-            <option>其他</option>
+            <option value="crypto">BTC/USDT</option>
+            <option value="crypto">ETH/USDT</option>
+            <option value="crypto">SOL/USDT</option>
+            <option value="gold">黄金 XAU/USD</option>
           </select>
         </div>
         <div class="card-row">
@@ -366,20 +362,20 @@ input[type=range]::-webkit-slider-thumb {
           <input type="number" id="e-entry" placeholder="e.g. 95000" inputmode="decimal" oninput="calc()" />
         </div>
         <div class="card-row">
-          <label>止损距离</label>
-          <input type="number" id="e-sl-pct" placeholder="e.g. 2 (%)" inputmode="decimal" step="0.1" oninput="calc()" />
+          <label>止损价格</label>
+          <input type="number" id="e-slprice" placeholder="e.g. 93000" inputmode="decimal" oninput="calc()" />
         </div>
         <div class="card-row">
           <label>盈亏比</label>
           <input type="number" id="e-rr" placeholder="R:R" inputmode="decimal" step="0.5" oninput="calc()" />
         </div>
-        <div class="card-row">
+        <div class="card-row" id="lev-row">
           <label>杠杆</label>
           <input type="number" id="e-lev" placeholder="倍数" inputmode="decimal" oninput="calc()" />
         </div>
         <div class="card-row">
-          <label>风险比例</label>
-          <input type="number" id="e-risk" placeholder="e.g. 2 (%)" inputmode="decimal" step="0.5" oninput="calc()" />
+          <label>最大亏损</label>
+          <input type="number" id="e-maxloss" placeholder="e.g. 500 (USDT/$)" inputmode="decimal" oninput="calc()" />
         </div>
       </div>
       <div class="calc-result">
@@ -395,8 +391,8 @@ input[type=range]::-webkit-slider-thumb {
         </div>
         <div class="calc-item">
           <div class="calc-val" id="c-pos" style="color:var(--accent)">—</div>
-          <div class="calc-lbl">建议仓位</div>
-          <div class="calc-sub" id="c-risk-a">设置资金</div>
+          <div class="calc-lbl" id="c-pos-lbl">保证金</div>
+          <div class="calc-sub" id="c-risk-a">填入场信息</div>
         </div>
       </div>
     </div>
@@ -518,21 +514,7 @@ input[type=range]::-webkit-slider-thumb {
   <!-- TAB: 设置 -->
   <div class="tab-panel" id="tab-settings">
 
-    <div class="setup-info">在这里设置一次，入场计算自动套用，无需每次手填。</div>
-
-    <div class="section">
-      <div class="section-header">账户</div>
-      <div class="card">
-        <div class="card-row">
-          <label>总资金</label>
-          <input type="number" id="s-capital" placeholder="e.g. 10000 USDT" inputmode="decimal" oninput="saveSettings()" />
-        </div>
-        <div class="card-row">
-          <label>单笔风险</label>
-          <input type="number" id="s-risk" placeholder="e.g. 2 (%)" inputmode="decimal" step="0.5" oninput="saveSettings()" />
-        </div>
-      </div>
-    </div>
+    <div class="setup-info">设置默认盈亏比和杠杆，入场时自动套用。</div>
 
     <div class="section">
       <div class="section-header">默认参数</div>
@@ -543,7 +525,7 @@ input[type=range]::-webkit-slider-thumb {
         </div>
         <div class="card-row">
           <label>默认杠杆</label>
-          <input type="number" id="s-lev" placeholder="e.g. 10" inputmode="decimal" oninput="saveSettings()" />
+          <input type="number" id="s-lev" placeholder="e.g. 10 (加密)" inputmode="decimal" oninput="saveSettings()" />
         </div>
       </div>
     </div>
@@ -630,52 +612,103 @@ function updateEmo(v) {
     `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, var(--border2) ${pct}%)`;
 }
 
+function getAssetType() {
+  const sel = document.getElementById('e-asset');
+  const opt = sel.options[sel.selectedIndex];
+  return opt ? opt.value : '';
+}
+
+function onAssetChange() {
+  const type = getAssetType();
+  const levRow = document.getElementById('lev-row');
+  const posLbl = document.getElementById('c-pos-lbl');
+  if (type === 'gold') {
+    levRow.style.display = 'none';
+    posLbl.textContent = '手数 (lots)';
+  } else {
+    levRow.style.display = 'flex';
+    posLbl.textContent = '保证金 (USDT)';
+  }
+  calc();
+}
+
 function calc() {
   const entry = parseFloat(document.getElementById('e-entry').value);
-  const slPct = parseFloat(document.getElementById('e-sl-pct').value);
+  const slPrice = parseFloat(document.getElementById('e-slprice').value);
   const rr = parseFloat(document.getElementById('e-rr').value) || 2;
-  const lev = parseFloat(document.getElementById('e-lev').value) || 10;
-  const riskPct = parseFloat(document.getElementById('e-risk').value) || 2;
-  const capital = parseFloat(document.getElementById('s-capital').value) || 0;
+  const maxLoss = parseFloat(document.getElementById('e-maxloss').value);
   const isShort = dirState === 'short';
+  const type = getAssetType();
 
-  if (!entry || !slPct) {
+  const reset = () => {
     ['c-sl','c-tp','c-pos'].forEach(id => document.getElementById(id).textContent = '—');
     document.getElementById('c-sl-d').textContent = '—';
     document.getElementById('c-rr-s').textContent = '—';
-    document.getElementById('c-risk-a').textContent = capital ? '设置止损' : '设置资金';
-    return;
-  }
+    document.getElementById('c-risk-a').textContent = '填入场信息';
+  };
 
-  const slPrice = isShort ? entry * (1 + slPct / 100) : entry * (1 - slPct / 100);
-  const tpPrice = isShort ? entry * (1 - slPct / 100 * rr) : entry * (1 + slPct / 100 * rr);
+  if (!entry || !slPrice) { reset(); return; }
 
-  document.getElementById('c-sl').textContent = slPrice >= 1000 ? slPrice.toFixed(0) : slPrice.toFixed(4);
-  document.getElementById('c-tp').textContent = tpPrice >= 1000 ? tpPrice.toFixed(0) : tpPrice.toFixed(4);
-  document.getElementById('c-sl-d').textContent = (isShort ? '+' : '-') + slPct + '%';
+  // validate direction vs sl price
+  if (dirState === 'long' && slPrice >= entry) { reset(); document.getElementById('c-sl-d').textContent = '止损价应低于入场价'; return; }
+  if (dirState === 'short' && slPrice <= entry) { reset(); document.getElementById('c-sl-d').textContent = '止损价应高于入场价'; return; }
+
+  const slDist = Math.abs(entry - slPrice);
+  const tpPrice = isShort ? entry - slDist * rr : entry + slDist * rr;
+
+  document.getElementById('c-sl').textContent = slPrice >= 100 ? slPrice.toFixed(2) : slPrice.toFixed(4);
+  document.getElementById('c-tp').textContent = tpPrice >= 100 ? tpPrice.toFixed(2) : tpPrice.toFixed(4);
   document.getElementById('c-rr-s').textContent = '1 : ' + rr;
 
-  if (capital > 0) {
-    const riskAmt = capital * riskPct / 100;
-    const posVal = riskAmt / (slPct / 100);
-    const posSize = posVal * lev / entry;
-    document.getElementById('c-pos').textContent = posSize >= 1 ? posSize.toFixed(2) : posSize.toFixed(4);
-    document.getElementById('c-risk-a').textContent = '最大亏 ' + riskAmt.toFixed(0);
+  if (type === 'gold') {
+    const slPct = (slDist / entry * 100).toFixed(2);
+    document.getElementById('c-sl-d').textContent = '$' + slDist.toFixed(2) + ' / ' + slPct + '%';
+    if (maxLoss) {
+      const lots = maxLoss / (slDist * 100);
+      document.getElementById('c-pos').textContent = lots.toFixed(2) + ' 手';
+      document.getElementById('c-risk-a').textContent = '最大亏 $' + maxLoss.toFixed(0);
+    } else {
+      document.getElementById('c-pos').textContent = '—';
+      document.getElementById('c-risk-a').textContent = '填最大亏损';
+    }
   } else {
-    document.getElementById('c-pos').textContent = '—';
-    document.getElementById('c-risk-a').textContent = '请设置资金';
+    const lev = parseFloat(document.getElementById('e-lev').value) || 10;
+    const slPct = slDist / entry * 100;
+    document.getElementById('c-sl-d').textContent = (isShort ? '+' : '-') + slPct.toFixed(2) + '%';
+    if (maxLoss) {
+      const posVal = maxLoss / (slPct / 100);
+      const margin = posVal / lev;
+      document.getElementById('c-pos').textContent = margin.toFixed(2) + ' U';
+      document.getElementById('c-risk-a').textContent = '最大亏 ' + maxLoss.toFixed(0) + ' U';
+    } else {
+      document.getElementById('c-pos').textContent = '—';
+      document.getElementById('c-risk-a').textContent = '填最大亏损';
+    }
   }
 }
 
 function calcExit() {
   const entry = parseFloat(document.getElementById('e-entry').value);
+  const slPrice = parseFloat(document.getElementById('e-slprice').value);
   const exit = parseFloat(document.getElementById('r-exit').value);
-  const slPct = parseFloat(document.getElementById('e-sl-pct').value) || 1;
+  const maxLoss = parseFloat(document.getElementById('e-maxloss').value);
+  const type = getAssetType();
   if (!entry || !exit) return;
   const isShort = dirState === 'short';
-  const pnlPct = isShort ? (entry - exit) / entry * 100 : (exit - entry) / entry * 100;
-  const rActual = (pnlPct / slPct).toFixed(2);
-  document.getElementById('r-pnl').value = pnlPct.toFixed(2) + '% (' + rActual + 'R)';
+  const slDist = slPrice ? Math.abs(entry - slPrice) : 1;
+
+  if (type === 'gold') {
+    const lots = parseFloat(document.getElementById('c-pos').textContent) || 0;
+    const pnlPerOz = isShort ? (entry - exit) : (exit - entry);
+    const pnlAmt = pnlPerOz * lots * 100;
+    const rActual = maxLoss ? (pnlAmt / maxLoss).toFixed(2) : '—';
+    document.getElementById('r-pnl').value = '$' + pnlAmt.toFixed(0) + ' (' + rActual + 'R)';
+  } else {
+    const pnlPct = isShort ? (entry - exit) / entry * 100 : (exit - entry) / entry * 100;
+    const slPct = slDist / entry * 100;
+    const rActual = (pnlPct / slPct).toFixed(2);
+    document.getElementById('r-pnl').value = pnlPct.toFixed(2) + '% (' + rActual + 'R)';
+  }
 }
 
 function previewImg(input, imgId, txtId) {
@@ -728,12 +761,8 @@ function saveEntry() {
     tf: getVal('e-tf'),
     dir: dirState,
     entry: getVal('e-entry'),
-    sl: document.getElementById('c-sl').textContent,
-    tp: document.getElementById('c-tp').textContent,
-    pos: document.getElementById('c-pos').textContent,
-    slPct: getVal('e-sl-pct'),
-    rr: getVal('e-rr'),
-    lev: getVal('e-lev'),
+    slprice: getVal('e-slprice'),
+    maxloss: getVal('e-maxloss'),
     method: getVal('e-method'),
     trigger: getVal('e-trigger'),
     status: 'open',
@@ -748,12 +777,18 @@ function saveEntry() {
   records.unshift(record);
   saveRecords(records);
 
-  // copy text
   const dirTxt = dirState === 'long' ? '做多' : '做空';
+  const slPriceDisplay = document.getElementById('c-sl').textContent;
+  const tpPriceDisplay = document.getElementById('c-tp').textContent;
+  const posDisplay = document.getElementById('c-pos').textContent;
+  const posLbl = document.getElementById('c-pos-lbl').textContent;
+  const type = getAssetType();
+  const slUnit = type === 'gold' ? '止损价 $' + record.slprice : '止损价 ' + record.slprice;
   const text = `【入场记录】${record.date}
 品种：${record.asset}　方向：${dirTxt}　周期：${record.tf}
-入场：${record.entry}　止损：${record.sl}　目标：${record.tp}
-仓位：${record.pos}
+入场：${record.entry}　${slUnit}　目标价：${tpPriceDisplay}
+止损距离：${document.getElementById('c-sl-d').textContent}　最大亏损：${record.maxloss || '—'}
+${posLbl}：${posDisplay}
 方法：${record.method || '—'}
 触发：${record.trigger || '—'}`;
   copyText(text);
@@ -835,28 +870,22 @@ function renderHistory() {
 function loadSettings() {
   try {
     const s = JSON.parse(localStorage.getItem('tj_settings') || '{}');
-    if (s.capital) document.getElementById('s-capital').value = s.capital;
-    if (s.risk) document.getElementById('s-risk').value = s.risk;
     if (s.rr) document.getElementById('s-rr').value = s.rr;
     if (s.lev) document.getElementById('s-lev').value = s.lev;
     document.getElementById('e-rr').value = s.rr || 2;
     document.getElementById('e-lev').value = s.lev || 10;
-    document.getElementById('e-risk').value = s.risk || 2;
   } catch(e) {}
 }
 
 function saveSettings() {
   try {
     const s = {
-      capital: document.getElementById('s-capital').value,
-      risk: document.getElementById('s-risk').value,
       rr: document.getElementById('s-rr').value,
       lev: document.getElementById('s-lev').value
     };
     localStorage.setItem('tj_settings', JSON.stringify(s));
     document.getElementById('e-rr').value = s.rr;
     document.getElementById('e-lev').value = s.lev;
-    document.getElementById('e-risk').value = s.risk;
     calc();
   } catch(e) {}
 }
