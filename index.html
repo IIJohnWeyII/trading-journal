@@ -168,19 +168,7 @@ input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2)}
 .sd{font-size:11px;color:var(--t3);margin-top:3px;line-height:1.4}
 .sv.g{color:var(--green)}.sv.r{color:var(--red)}
 
-/* History */
-.hi{background:var(--card);border-radius:var(--rs);padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 0 var(--b),0 0 0 .5px var(--b);display:flex;align-items:center;gap:12px;cursor:pointer;transition:transform .15s ease,background .1s ease;animation:cardIn .3s cubic-bezier(.4,0,.2,1) both}
-.hi:active{transform:scale(.98);background:rgba(0,0,0,.02)}
-.hi-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.hi-dot.win{background:var(--green)}.hi-dot.loss{background:var(--red)}.hi-dot.flat{background:var(--orange)}.hi-dot.open{background:var(--accent)}
-.hi-info{flex:1;min-width:0}
-.hi-top{display:flex;align-items:center;justify-content:space-between}
-.hi-asset{font-size:15px;font-weight:600}
-.hi-pnl{font-size:15px;font-weight:700;font-family:var(--mono)}
-.hi-pnl.g{color:var(--green)}.hi-pnl.r{color:var(--red)}
-.hi-bot{display:flex;align-items:center;justify-content:space-between;margin-top:3px}
-.hi-date{font-size:12px;color:var(--t3)}.hi-dir{font-size:12px;color:var(--t2)}
-.empty{text-align:center;padding:48px 20px;color:var(--t3);font-size:15px;line-height:1.6}
+/* History - see below edit-mode-bar section */
 
 /* Toast */
 .toast{position:fixed;bottom:calc(94px + var(--sb));left:50%;transform:translateX(-50%) translateY(12px) scale(.95);background:rgba(30,30,30,.92);color:white;padding:11px 22px;border-radius:22px;font-size:14px;font-weight:500;pointer-events:none;opacity:0;transition:all .3s cubic-bezier(.34,1.2,.64,1);z-index:600;max-width:88vw;text-align:center;white-space:pre-line;backdrop-filter:blur(12px)}
@@ -197,6 +185,38 @@ input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2)}
 .edit-mode-bar{background:var(--al);border-radius:var(--rs);padding:10px 14px;font-size:13px;color:var(--accent);margin-bottom:12px;font-weight:600;display:none;align-items:center;justify-content:space-between}
 .edit-mode-bar.show{display:flex}
 .edit-cancel{font-size:13px;color:var(--red);cursor:pointer;font-weight:600}
+
+/* History card expanded */
+.hi{background:var(--card);border-radius:var(--rs);margin-bottom:8px;box-shadow:0 1px 0 var(--b),0 0 0 .5px var(--b);overflow:hidden;animation:cardIn .3s cubic-bezier(.4,0,.2,1) both}
+.hi-main{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;transition:background .1s ease}
+.hi-main:active{background:rgba(0,0,0,.02)}
+.hi-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.hi-dot.win{background:var(--green)}.hi-dot.loss{background:var(--red)}.hi-dot.flat{background:var(--orange)}.hi-dot.open{background:var(--accent)}
+.hi-info{flex:1;min-width:0}
+.hi-top{display:flex;align-items:center;justify-content:space-between}
+.hi-asset{font-size:15px;font-weight:600}
+.hi-pnl{font-size:15px;font-weight:700;font-family:var(--mono)}
+.hi-pnl.g{color:var(--green)}.hi-pnl.r{color:var(--red)}
+.hi-bot{display:flex;align-items:center;justify-content:space-between;margin-top:3px}
+.hi-date{font-size:12px;color:var(--t3)}.hi-dir{font-size:12px;color:var(--t2)}
+.hi-more{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:18px;color:var(--t3);cursor:pointer;flex-shrink:0;transition:background .15s,color .15s}
+.hi-more:active{background:var(--bg);color:var(--t)}
+.hi-detail{display:none;padding:0 16px 14px;border-top:.5px solid var(--b)}
+.hi-detail.open{display:block;animation:fadeIn .2s ease}
+.hi-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.hi-tag{padding:3px 10px;border-radius:20px;font-size:12px;background:var(--al);color:var(--accent);font-weight:500}
+.hi-tag.trigger{background:var(--gl);color:#1A7A35}
+.hi-thumbs{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.hi-thumb{width:56px;height:56px;border-radius:var(--rx);object-fit:cover;cursor:pointer;transition:transform .15s}
+.hi-thumb:active{transform:scale(.93)}
+.hi-note{font-size:13px;color:var(--t2);margin-top:8px;line-height:1.5}
+.hi-actions{display:flex;gap:8px;margin-top:12px}
+.hi-action-btn{flex:1;padding:9px;border-radius:var(--rx);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);border:none;transition:opacity .15s,transform .15s}
+.hi-action-btn:active{opacity:.8;transform:scale(.97)}
+.hi-action-btn.edit{background:var(--al);color:var(--accent)}
+.hi-action-btn.review{background:var(--gl);color:#1A7A35}
+.hi-action-btn.review-edit{background:var(--ol);color:#A05F00}
+.empty{text-align:center;padding:48px 20px;color:var(--t3);font-size:15px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -427,7 +447,7 @@ input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2)}
 <script>
 var dirState='', resState='', reviewTargetId=null, editingEntryId=null;
 var selMethods=[], selTriggers=[];
-var entryImgs=[], reviewImgs=[];
+var entryImgs=[], reviewImgs=[], lbHistoryImgs=[];
 var CRYPTO_MIN={BTC:0.001,ETH:0.01,SOL:0.1};
 var DEF_METHODS=['价格行为PA','突破回踩','支撑阻力','趋势跟随','OB订单块','FVG缺口','双顶/双底','均线交叉'];
 var DEF_TRIGGERS=['4H收线确认','回踩获支撑','成交量放大','突破关键位','K线形态确认','背离信号','EMA支撑'];
@@ -631,7 +651,7 @@ function closeLb(){
 }
 
 function lbGoto(idx){
-  var imgs=lbWhich==='entry'?entryImgs:reviewImgs;
+  var imgs=lbWhich.indexOf('_history_')===0?lbHistoryImgs:(lbWhich==='entry'?entryImgs:reviewImgs);
   if(idx<0||idx>=imgs.length)return;
   lbIdx=idx;
   var track=G('lb-track');
@@ -784,33 +804,98 @@ function renderHistory(){
   records.slice().reverse().forEach(function(r){if(r.result==='loss'){curCL++;maxCL=Math.max(maxCL,curCL);}else curCL=0;});
   var dy=function(i){return 'animation-delay:'+(i*0.05)+'s';};
   grid.innerHTML=[[''+records.length,'总交易次数','含未复盘',''],[''+wr+'%','胜率','已复盘 '+total+' 笔',wr>=50?'g':'r'],[''+wins.length,'盈利次数','平均 '+aw+'R','g'],[''+losses.length,'亏损次数','平均 '+al+'R','r'],[exp+'R','期望值','正数代表系统有优势',parseFloat(exp)>0?'g':'r'],[''+maxCL,'最大连续亏损','连续亏损峰值','r']].map(function(s,i){return '<div class="stat-c" style="'+dy(i)+'"><div class="sv '+s[3]+'">'+s[0]+'</div><div class="sl">'+s[1]+'</div><div class="sd">'+s[2]+'</div></div>';}).join('');
+
   if(!records.length){list.innerHTML='<div class="empty">还没有交易记录<br>从入场开始记录吧</div>';return;}
+
   var dm={long:'做多 ↑',short:'做空 ↓'},rm={win:'盈利',loss:'亏损',flat:'保本',open:'持仓中','':`持仓中`};
+
   list.innerHTML=records.map(function(r,i){
     var pc=r.result==='win'?' g':r.result==='loss'?' r':'';
-    return '<div class="hi" style="'+dy(i)+'" onclick="openRecord('+r.id+')">'
-      +'<div class="hi-dot '+(r.status==='open'?'open':r.result||'open')+'"></div>'
-      +'<div class="hi-info"><div class="hi-top"><span class="hi-asset">'+(r.asset||'—')+'</span><span class="hi-pnl'+pc+'">'+(r.pnl||rm[r.status])+'</span></div>'
-      +'<div class="hi-bot"><span class="hi-date">'+r.date+'</span><span class="hi-dir">'+(dm[r.dir]||'—')+' · '+(r.tf||'')+'</span></div></div></div>';
+    var dotCls=r.status==='open'?'open':r.result||'open';
+
+    // Tags summary
+    var methodTags=(r.method||'').split('、').filter(Boolean).map(function(t){return '<span class="hi-tag">'+t+'</span>';}).join('');
+    var triggerTags=(r.trigger||'').split('、').filter(Boolean).map(function(t){return '<span class="hi-tag trigger">'+t+'</span>';}).join('');
+    var tagsHtml=(methodTags||triggerTags)?'<div class="hi-tags">'+methodTags+triggerTags+'</div>':'';
+
+    // Entry images
+    var entImgs=(r.entryImgs||[]);
+    var thumbsHtml=entImgs.length?'<div class="hi-thumbs">'+entImgs.slice(0,4).map(function(src,idx){return '<img class="hi-thumb" src="'+src+'" onclick="openLbFromHistory(event,'+r.id+',\'entry\','+idx+')">';}).join('')+(entImgs.length>4?'<span style="font-size:12px;color:var(--t3);align-self:center">+'+(entImgs.length-4)+'</span>':'')+'</div>':'';
+
+    // Review images
+    var revImgs=(r.reviewImgs||[]);
+    var revThumbsHtml=revImgs.length?'<div class="hi-thumbs">'+revImgs.slice(0,4).map(function(src,idx){return '<img class="hi-thumb" src="'+src+'" onclick="openLbFromHistory(event,'+r.id+',\'review\','+idx+')">';}).join('')+(revImgs.length>4?'<span style="font-size:12px;color:var(--t3);align-self:center">+'+(revImgs.length-4)+'</span>':'')+'</div>':'';
+
+    // Review notes
+    var noteHtml='';
+    if(r.diff||r.lesson){
+      noteHtml='<div class="hi-note">';
+      if(r.diff) noteHtml+='<div><span style="color:var(--t3)">差异：</span>'+r.diff+'</div>';
+      if(r.lesson) noteHtml+='<div style="margin-top:4px"><span style="color:var(--t3)">教训：</span>'+r.lesson+'</div>';
+      noteHtml+='</div>';
+    }
+
+    // Action buttons
+    var actionBtns='<div class="hi-actions">'
+      +'<button class="hi-action-btn edit" onclick="openEditEntry('+r.id+');event.stopPropagation()">✏️ 编辑入场</button>';
+    if(r.status==='open'){
+      actionBtns+='<button class="hi-action-btn review" onclick="openReview('+r.id+');event.stopPropagation()">📝 去复盘</button>';
+    } else {
+      actionBtns+='<button class="hi-action-btn review-edit" onclick="openReview('+r.id+');event.stopPropagation()">📝 编辑复盘</button>';
+    }
+    actionBtns+='</div>';
+
+    return '<div class="hi" style="'+dy(i)+'" id="hi-'+r.id+'">'
+      +'<div class="hi-main" onclick="toggleHiDetail('+r.id+')">'
+        +'<div class="hi-dot '+dotCls+'"></div>'
+        +'<div class="hi-info">'
+          +'<div class="hi-top"><span class="hi-asset">'+(r.asset||'—')+'</span><span class="hi-pnl'+pc+'">'+(r.pnl||rm[r.status])+'</span></div>'
+          +'<div class="hi-bot"><span class="hi-date">'+r.date+'</span><span class="hi-dir">'+(dm[r.dir]||'—')+' · '+(r.tf||'')+'</span></div>'
+        +'</div>'
+        +'<div class="hi-more">···</div>'
+      +'</div>'
+      +'<div class="hi-detail" id="hid-'+r.id+'">'
+        +tagsHtml
+        +thumbsHtml
+        +revThumbsHtml
+        +noteHtml
+        +actionBtns
+      +'</div>'
+    +'</div>';
   }).join('');
 }
 
-// ── Open record — smart routing ──
-function openRecord(id){
+// ── Toggle history card detail ──
+function toggleHiDetail(id){
+  var detail=G('hid-'+id);
+  if(!detail)return;
+  var isOpen=detail.classList.contains('open');
+  // Close all others
+  document.querySelectorAll('.hi-detail.open').forEach(function(d){d.classList.remove('open');});
+  if(!isOpen) detail.classList.add('open');
+}
+
+// Open lightbox from history card
+function openLbFromHistory(e,id,which,idx){
+  e.stopPropagation();
   var records=getRecords(),r=records.find(function(x){return x.id===id;});
   if(!r)return;
-
-  if(r.status==='open'){
-    // Go to review tab to fill in review
-    openReview(id);
-  } else {
-    // Show action sheet: edit entry or edit review
-    if(confirm('编辑入场数据？\n（取消则编辑复盘数据）')){
-      openEditEntry(id);
-    } else {
-      openReview(id);
-    }
-  }
+  var imgs=which==='entry'?(r.entryImgs||[]):(r.reviewImgs||[]);
+  if(!imgs.length)return;
+  // Temporarily set lightbox images
+  lbWhich='_history_'+id+'_'+which;
+  lbHistoryImgs=imgs;
+  lbIdx=idx;
+  var track=G('lb-track');
+  track.innerHTML=imgs.map(function(src){return '<div class="lb-slide"><img src="'+src+'"/></div>';}).join('');
+  track.style.transition='none';
+  track.style.transform='translateX(-'+idx+'00%)';
+  G('lb-counter').textContent=(idx+1)+' / '+imgs.length;
+  G('lightbox').classList.add('open');
+  document.body.style.overflow='hidden';
+  var lb=G('lightbox');
+  lb.addEventListener('touchstart',lbTouchStart,{passive:true});
+  lb.addEventListener('touchend',lbTouchEnd,{passive:true});
 }
 
 function openEditEntry(id){
@@ -879,25 +964,63 @@ function exportExcel(){
   dl(new Blob([csv],{type:'text/csv;charset=utf-8'}),'交易日志_'+now()+'.csv');
   showToast('Excel 已下载');
 }
-function exportJSON(){var r=getRecords();if(!r.length){showToast('暂无记录');return;}dl(new Blob([JSON.stringify(r,null,2)],{type:'application/json'}),'交易日志_'+now()+'.json');showToast('JSON 已下载');}
+function exportJSON(){
+  var r=getRecords();
+  var data={
+    records:r,
+    methods:getTags('method'),
+    triggers:getTags('trigger'),
+    exportedAt:new Date().toISOString()
+  };
+  dl(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'交易日志_'+now()+'.json');
+  showToast('JSON 已下载（含标签）');
+}
 
 function importJSON(input){
   var f=input.files[0];if(!f)return;
   var reader=new FileReader();
   reader.onload=function(e){
     try{
-      var data=JSON.parse(e.target.result);
+      var parsed=JSON.parse(e.target.result);
+
+      // Support both old format (plain array) and new format (object with records+tags)
+      var data, methods, triggers;
+      if(Array.isArray(parsed)){
+        data=parsed; methods=null; triggers=null;
+      } else {
+        data=parsed.records||[];
+        methods=parsed.methods||null;
+        triggers=parsed.triggers||null;
+      }
+
       if(!Array.isArray(data)){showToast('文件格式错误，请选择正确的备份文件');return;}
+
+      // Merge records
       var existing=getRecords();
-      // Merge: keep existing, add imported ones that don't exist by id
       var existingIds=existing.map(function(r){return r.id;});
       var newRecords=data.filter(function(r){return existingIds.indexOf(r.id)===-1;});
       var merged=existing.concat(newRecords);
-      // Sort by id desc (newest first)
       merged.sort(function(a,b){return b.id-a.id;});
       saveRecords(merged);
+
+      // Merge tags (combine, deduplicate)
+      var tagMsg='';
+      if(methods){
+        var curM=getTags('method');
+        var mergedM=curM.concat(methods.filter(function(t){return curM.indexOf(t)===-1;}));
+        saveTags('method',mergedM);
+        tagMsg+=' 方法标签→'+mergedM.length+'个';
+      }
+      if(triggers){
+        var curT=getTags('trigger');
+        var mergedT=curT.concat(triggers.filter(function(t){return curT.indexOf(t)===-1;}));
+        saveTags('trigger',mergedT);
+        tagMsg+=' 触发标签→'+mergedT.length+'个';
+      }
+
       renderHistory();checkPending();
-      showToast('导入成功\n新增 '+newRecords.length+' 条，共 '+merged.length+' 条记录');
+      renderMethodTags();renderTriggerTags();
+      showToast('导入成功\n记录新增 '+newRecords.length+' 条，共 '+merged.length+' 条'+(tagMsg?'\n'+tagMsg:''));
     }catch(err){
       showToast('导入失败，文件格式不正确');
     }
