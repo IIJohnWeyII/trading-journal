@@ -1,8 +1,9 @@
 {
-  "name": "交易日志",
-  "short_name": "交易日志",
+  "name": "PipTrace",
+  "short_name": "PipTrace",
   "description": "专业交易记录与复盘工具",
-  "start_url": "/trading-journal/",
+  "start_url": "https://piptrace.app/",
+  "scope": "https://piptrace.app/",
   "display": "standalone",
   "background_color": "#F2F2F7",
   "theme_color": "#F2F2F7",
