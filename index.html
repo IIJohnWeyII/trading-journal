@@ -967,13 +967,15 @@ function exportExcel(){
 function exportJSON(){
   var r=getRecords();
   var data={
+    version:2,
+    exportedAt:new Date().toISOString(),
     records:r,
     methods:getTags('method'),
     triggers:getTags('trigger'),
-    exportedAt:new Date().toISOString()
+    settings:JSON.parse(localStorage.getItem('tj_settings')||'{}')
   };
   dl(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'交易日志_'+now()+'.json');
-  showToast('JSON 已下载（含标签）');
+  showToast('JSON 已下载（含标签和设置）');
 }
 
 function importJSON(input){
@@ -983,14 +985,15 @@ function importJSON(input){
     try{
       var parsed=JSON.parse(e.target.result);
 
-      // Support both old format (plain array) and new format (object with records+tags)
-      var data, methods, triggers;
+      // Support both old format (plain array) and new format
+      var data, methods, triggers, settings;
       if(Array.isArray(parsed)){
-        data=parsed; methods=null; triggers=null;
+        data=parsed; methods=null; triggers=null; settings=null;
       } else {
         data=parsed.records||[];
         methods=parsed.methods||null;
         triggers=parsed.triggers||null;
+        settings=parsed.settings||null;
       }
 
       if(!Array.isArray(data)){showToast('文件格式错误，请选择正确的备份文件');return;}
@@ -1009,18 +1012,26 @@ function importJSON(input){
         var curM=getTags('method');
         var mergedM=curM.concat(methods.filter(function(t){return curM.indexOf(t)===-1;}));
         saveTags('method',mergedM);
-        tagMsg+=' 方法标签→'+mergedM.length+'个';
+        tagMsg+=' 方法标签 '+mergedM.length+' 个';
       }
       if(triggers){
         var curT=getTags('trigger');
         var mergedT=curT.concat(triggers.filter(function(t){return curT.indexOf(t)===-1;}));
         saveTags('trigger',mergedT);
-        tagMsg+=' 触发标签→'+mergedT.length+'个';
+        tagMsg+=' 触发标签 '+mergedT.length+' 个';
+      }
+
+      // Restore settings (overwrite — these are personal preferences)
+      var settingsMsg='';
+      if(settings&&(settings.rr||settings.lev)){
+        localStorage.setItem('tj_settings',JSON.stringify(settings));
+        loadSettings(); // refresh UI inputs
+        settingsMsg=' 设置已恢复';
       }
 
       renderHistory();checkPending();
       renderMethodTags();renderTriggerTags();
-      showToast('导入成功\n记录新增 '+newRecords.length+' 条，共 '+merged.length+' 条'+(tagMsg?'\n'+tagMsg:''));
+      showToast('导入成功\n记录新增 '+newRecords.length+' 条，共 '+merged.length+' 条'+(tagMsg?'\n'+tagMsg:'')+(settingsMsg?'\n'+settingsMsg:''));
     }catch(err){
       showToast('导入失败，文件格式不正确');
     }
