@@ -401,6 +401,11 @@ input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2)}
     <div class="card">
       <div class="cr" onclick="exportExcel()" style="cursor:pointer"><label>导出 Excel</label><span style="color:var(--accent);font-size:15px">下载 →</span></div>
       <div class="cr" onclick="exportJSON()" style="cursor:pointer"><label>导出 JSON</label><span style="color:var(--accent);font-size:15px">下载 →</span></div>
+      <div class="cr" style="cursor:pointer;position:relative;overflow:hidden">
+        <label>导入 JSON</label>
+        <span style="color:var(--accent);font-size:15px">选择文件 →</span>
+        <input type="file" accept=".json" onchange="importJSON(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%"/>
+      </div>
       <div class="cr" onclick="clearData()" style="cursor:pointer"><label style="color:var(--red)">清除所有记录</label><span style="color:var(--red);font-size:15px">清除 →</span></div>
     </div>
   </div>
@@ -875,6 +880,31 @@ function exportExcel(){
   showToast('Excel 已下载');
 }
 function exportJSON(){var r=getRecords();if(!r.length){showToast('暂无记录');return;}dl(new Blob([JSON.stringify(r,null,2)],{type:'application/json'}),'交易日志_'+now()+'.json');showToast('JSON 已下载');}
+
+function importJSON(input){
+  var f=input.files[0];if(!f)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      if(!Array.isArray(data)){showToast('文件格式错误，请选择正确的备份文件');return;}
+      var existing=getRecords();
+      // Merge: keep existing, add imported ones that don't exist by id
+      var existingIds=existing.map(function(r){return r.id;});
+      var newRecords=data.filter(function(r){return existingIds.indexOf(r.id)===-1;});
+      var merged=existing.concat(newRecords);
+      // Sort by id desc (newest first)
+      merged.sort(function(a,b){return b.id-a.id;});
+      saveRecords(merged);
+      renderHistory();checkPending();
+      showToast('导入成功\n新增 '+newRecords.length+' 条，共 '+merged.length+' 条记录');
+    }catch(err){
+      showToast('导入失败，文件格式不正确');
+    }
+    input.value='';
+  };
+  reader.readAsText(f);
+}
 function dl(blob,name){var u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
 function now(){return new Date().toISOString().split('T')[0];}
 function clearData(){if(confirm('确定要清除所有交易记录吗？此操作不可恢复。')){localStorage.removeItem('tj_records');renderHistory();checkPending();showToast('已清除');}}
