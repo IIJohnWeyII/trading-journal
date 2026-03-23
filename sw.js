@@ -1,4 +1,4 @@
-const CACHE = 'tj-v1';
+const CACHE = 'piptrace-v1';
 const ASSETS = ['./', './index.html', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
