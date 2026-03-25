@@ -1164,28 +1164,27 @@ function exportJSON(){
             files:[file],
             title:'导出交易日志'
           }).then(function(){
-            showToast('✓ 导出成功\n含 '+r.length+' 条记录 + '+imgCount+' 组图片\n\n请选择"存储到文件" → "iCloud云盘"或"我的iPhone"');
+            showToast('✓ 导出成功\n含 '+r.length+' 条记录 + '+imgCount+' 组图片\n\n请在分享菜单中选择\n"存储到文件" → "iCloud云盘"或"我的iPhone"');
           }).catch(function(err){
             if(err.name!=='AbortError'){
               console.error('分享失败:',err);
-              // Fallback: 提示用户手动操作
-              showToast('⚠ 自动保存失败\n\n请长按下方链接选择"下载链接文件"\n然后选择保存位置');
-              // 创建一个可下载的链接供用户手动操作
-              createManualDownloadLink(blob, filename);
+              showToast('⚠ 分享失败\n\n建议使用Safari浏览器\n或将网页"添加到主屏幕"后重试');
             }
           });
+          return; // 重要：成功调用share后直接返回，不再执行dl()
         }else{
           // 浏览器不支持文件分享
           showToast('⚠ 当前浏览器不支持文件分享\n\n建议使用Safari浏览器\n或将网页"添加到主屏幕"后使用');
-          createManualDownloadLink(blob, filename);
         }
       }else{
         // 不支持Web Share API
         showToast('⚠ 请使用Safari浏览器\n\n或将网页"添加到主屏幕"');
-        createManualDownloadLink(blob, filename);
       }
+      // iOS设备上，如果Share API失败，则不执行任何下载操作
+      // 避免产生错误的下载
+      return;
     }else{
-      // 非iOS设备
+      // 非iOS设备：使用传统下载
       dl(blob,filename);
       showToast('JSON 已下载\n含 '+r.length+' 条记录 + '+imgCount+' 组图片 ✓');
     }
