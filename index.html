@@ -626,9 +626,8 @@ function getAssetType(){
 function onAssetChange(){
   var t=getAssetType();
   G('lev-row').style.display='flex';
-  T('c-pos-lbl',t==='crypto'?'保证金 (USDT)':'保证金 (USD)');
-  G('lots-row').style.display=t==='metal'?'flex':'none';
-  if(t==='metal' && !G('e-lots').value){G('e-lots').value='0.01';}
+  T('c-pos-lbl',t==='metal'?'手数 (lots)':(t==='crypto'?'保证金 (USDT)':'保证金 (USD)'));
+  G('lots-row').style.display='none';
   calc();
 }
 
@@ -659,36 +658,19 @@ function calc(){
     T('c-sl-d','$'+slD.toFixed(2)+' / '+(slD/entry*100).toFixed(2)+'%');
     if(maxL){
       var sym=G('e-asset').value,cfg=METAL_CFG[sym]||METAL_CFG.gold,lev=parseFloat(G('e-lev').value)||10;
-      var lotsInp=parseFloat(G('e-lots').value);
       var minR=slD*cfg.minLot*cfg.contract;
-      if(lotsInp&&lotsInp>0){
-        var stepsInp=Math.floor(lotsInp/cfg.minLot);
-        var lots=stepsInp*cfg.minLot;
-        G('e-lots').value=lots.toFixed(2);
+      if(maxL<minR){animVal('c-pos','—');T('c-risk-a','无法开仓');warn.textContent='⚠️ 最大亏损 $'+maxL.toFixed(2)+' 不足。最小风险为 $'+minR.toFixed(2);warn.style.display='block';info.style.display='none';}
+      else{
+        var steps=Math.floor(maxL/(slD*cfg.contract)/cfg.minLot);
+        var lots=(steps*cfg.minLot);
         var aR=slD*lots*cfg.contract;
         var mg=lots*cfg.contract*entry/lev;
         G('c-pos').dataset.lots=lots.toFixed(4);
-        animVal('c-pos',mg.toFixed(2)+' $');
-        T('c-risk-a','手数 '+lots.toFixed(2)+' 手，实际亏 $'+aR.toFixed(2));
-        if(maxL&&aR>maxL){warn.textContent='⚠️ 实际亏损 $'+aR.toFixed(2)+' 超过最大亏损 $'+maxL.toFixed(2);warn.style.display='block';info.style.display='none';}
-        else if(lev>50){warn.textContent='⚠️ 杠杆 '+lev+'x 偏高，请谨慎。';warn.style.display='block';info.style.display='none';}
-        else if(maxL&&aR<maxL*0.95){warn.style.display='none';info.textContent='ℹ️ 与最大亏损存在余量，实际最大亏 $'+aR.toFixed(2);info.style.display='block';}
+        animVal('c-pos',lots.toFixed(2)+' 手');
+        T('c-risk-a','保证金 $'+mg.toFixed(2)+'，实际亏 $'+aR.toFixed(2));
+        if(lev>50){warn.textContent='⚠️ 杠杆 '+lev+'x 偏高，请谨慎。';warn.style.display='block';info.style.display='none';}
+        else if(aR<maxL*0.95){warn.style.display='none';info.textContent='ℹ️ 手数取整，实际最大亏 $'+aR.toFixed(2);info.style.display='block';}
         else{warn.style.display='none';info.style.display='none';}
-      }else{
-        if(maxL<minR){animVal('c-pos','—');T('c-risk-a','无法开仓');warn.textContent='⚠️ 最大亏损 $'+maxL.toFixed(2)+' 不足。最小风险为 $'+minR.toFixed(2);warn.style.display='block';info.style.display='none';}
-        else{
-          var steps=Math.floor(maxL/(slD*cfg.contract)/cfg.minLot);
-          var lots=(steps*cfg.minLot);
-          var aR2=slD*lots*cfg.contract;
-          var mg2=lots*cfg.contract*entry/lev;
-          G('e-lots').value=lots.toFixed(2);
-          G('c-pos').dataset.lots=lots.toFixed(4);
-          animVal('c-pos',mg2.toFixed(2)+' $');
-          T('c-risk-a','手数 '+lots.toFixed(2)+' 手，实际亏 $'+aR2.toFixed(2));
-          if(lev>50){warn.textContent='⚠️ 杠杆 '+lev+'x 偏高，请谨慎。';warn.style.display='block';info.style.display='none';}
-          else if(aR2<maxL*0.95){warn.style.display='none';info.textContent='ℹ️ 手数取整，实际最大亏 $'+aR2.toFixed(2);info.style.display='block';}
-          else{warn.style.display='none';info.style.display='none';}
-        }
       }
     }else{
       T('c-risk-a','填写手数或最大亏损');
@@ -709,7 +691,7 @@ function calcExit(){
   var entry=parseFloat(G('e-entry').value),slP=parseFloat(G('e-slprice').value),exit=parseFloat(G('r-exit').value),maxL=parseFloat(G('e-maxloss').value),type=getAssetType();
   if(!entry||!exit)return;
   var isS=dirState==='short',slD=slP?Math.abs(entry-slP):1;
-  if(type==='metal'){var sym=G('e-asset').value,cfg=METAL_CFG[sym]||METAL_CFG.gold,lots=parseFloat(G('e-lots').value)||parseFloat(G('c-pos').dataset.lots)||0,pnl=(isS?(entry-exit):(exit-entry))*lots*cfg.contract,rA=maxL?(pnl/maxL).toFixed(2):'—';G('r-pnl').value='$'+pnl.toFixed(2)+' ('+rA+'R)';}
+  if(type==='metal'){var sym=G('e-asset').value,cfg=METAL_CFG[sym]||METAL_CFG.gold,lots=parseFloat(G('c-pos').dataset.lots)||0,pnl=(isS?(entry-exit):(exit-entry))*lots*cfg.contract,rA=maxL?(pnl/maxL).toFixed(2):'—';G('r-pnl').value='$'+pnl.toFixed(2)+' ('+rA+'R)';}
   else{var pp=isS?(entry-exit)/entry*100:(exit-entry)/entry*100,sp=slD/entry*100,rA2=sp>0?(pp/sp).toFixed(2):'—',lev=parseFloat(G('e-lev').value)||10,mg=parseFloat(G('c-pos').textContent)||0,pa=mg*lev*(pp/100),ps=pa?' / '+(pa>=0?'+':'')+pa.toFixed(2)+' U':'';G('r-pnl').value=pp.toFixed(2)+'%'+ps+' ('+rA2+'R)';}
 }
 
