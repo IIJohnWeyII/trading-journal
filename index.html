@@ -272,6 +272,7 @@ input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2)}
           <option value="ETH">ETH/USDT</option>
           <option value="SOL">SOL/USDT</option>
           <option value="gold">黄金 XAU/USD</option>
+          <option value="XAGUSD">白银 XAG/USD</option>
         </select>
       </div>
       <div class="cr"><label>周期</label>
@@ -616,7 +617,7 @@ function updateEmo(v){
 // ── Asset ──
 function getAssetType(){
   var v=G('e-asset').value;
-  if(v==='gold') return 'gold';
+  if(v==='gold' || v==='XAGUSD') return 'gold';
   if(CRYPTO_MIN[v]) return 'crypto';
   return '';
 }
