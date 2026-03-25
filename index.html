@@ -1149,13 +1149,46 @@ function exportJSON(){
       triggers:getTags('trigger'),
       settings:JSON.parse(localStorage.getItem('tj_settings')||'{}')
     };
-    dl(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'交易日志_'+now()+'.json');
-    var imgCount = Object.keys(images).length;
-    showToast('JSON 已下载\n含 ' + r.length + ' 条记录 + ' + imgCount + ' 组图片 ✓');
+    var filename='交易日志_'+now()+'.json';
+    var jsonStr=JSON.stringify(data,null,2);
+    var blob=new Blob([jsonStr],{type:'application/json'});
+    
+    // iOS兼容的下载方式
+    if(navigator.userAgent.match(/iPhone|iPad|iPod/i)){
+      // iOS设备：使用Files API (Share API fallback)
+      if(navigator.share){
+        // 创建File对象用于分享
+        var file=new File([blob],filename,{type:'application/json'});
+        navigator.share({files:[file],title:'导出交易日志'}).then(function(){
+          var imgCount=Object.keys(images).length;
+          showToast('JSON 导出成功\n含 '+r.length+' 条记录 + '+imgCount+' 组图片 ✓');
+        }).catch(function(err){
+          if(err.name!=='AbortError'){
+            console.error('分享失败:',err);
+            // Fallback到传统方式
+            dlFallback(blob,filename,images,r);
+          }
+        });
+      }else{
+        // 没有Share API，使用传统方式
+        dlFallback(blob,filename,images,r);
+      }
+    }else{
+      // 非iOS设备，使用传统下载
+      dl(blob,filename);
+      var imgCount=Object.keys(images).length;
+      showToast('JSON 已下载\n含 '+r.length+' 条记录 + '+imgCount+' 组图片 ✓');
+    }
   }).catch(function(err) {
     console.error('导出失败:', err);
     showToast('导出失败，请重试');
   });
+}
+
+function dlFallback(blob,filename,images,records){
+  dl(blob,filename);
+  var imgCount=Object.keys(images).length;
+  showToast('JSON 已下载\n含 '+records.length+' 条记录 + '+imgCount+' 组图片 ✓\n\n如无法保存，请使用浏览器"添加到主屏幕"功能');
 }
 
 function importJSON(input){
@@ -1248,7 +1281,26 @@ function importJSON(input){
   };
   reader.readAsText(f);
 }
-function dl(blob,name){var u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+function dl(blob,name){
+  var u=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=u;
+  a.download=name;
+  
+  // iOS Safari兼容性处理
+  if(/iPhone|iPad|iPod/i.test(navigator.userAgent)){
+    // iOS设备上，使用window.open在新标签页打开，然后提示用户手动保存
+    a.target='_blank';
+    a.rel='noopener noreferrer';
+  }
+  
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  
+  // 延迟释放URL，确保下载完成
+  setTimeout(function(){URL.revokeObjectURL(u);},100);
+}
 function now(){return new Date().toISOString().split('T')[0];}
 function clearData(){if(confirm('确定要清除所有交易记录吗？此操作不可恢复。')){localStorage.removeItem('tj_records');renderHistory();checkPending();showToast('已清除');}}
 
