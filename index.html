@@ -1141,10 +1141,10 @@ function exportJSON(){
     });
     
     var data={
-      version:3, // 版本升级到3，支持图片分离
+      version:3,
       exportedAt:new Date().toISOString(),
       records:r,
-      images:images, // 新增图片数据
+      images:images,
       methods:getTags('method'),
       triggers:getTags('trigger'),
       settings:JSON.parse(localStorage.getItem('tj_settings')||'{}')
@@ -1152,31 +1152,41 @@ function exportJSON(){
     var filename='交易日志_'+now()+'.json';
     var jsonStr=JSON.stringify(data,null,2);
     var blob=new Blob([jsonStr],{type:'application/json'});
+    var imgCount=Object.keys(images).length;
     
-    // iOS兼容的下载方式
+    // iOS设备：强制使用Web Share API
     if(navigator.userAgent.match(/iPhone|iPad|iPod/i)){
-      // iOS设备：使用Files API (Share API fallback)
-      if(navigator.share){
-        // 创建File对象用于分享
+      if(navigator.share && navigator.canShare){
         var file=new File([blob],filename,{type:'application/json'});
-        navigator.share({files:[file],title:'导出交易日志'}).then(function(){
-          var imgCount=Object.keys(images).length;
-          showToast('JSON 导出成功\n含 '+r.length+' 条记录 + '+imgCount+' 组图片 ✓');
-        }).catch(function(err){
-          if(err.name!=='AbortError'){
-            console.error('分享失败:',err);
-            // Fallback到传统方式
-            dlFallback(blob,filename,images,r);
-          }
-        });
+        // 检查是否可以分享文件
+        if(navigator.canShare({files:[file]})){
+          navigator.share({
+            files:[file],
+            title:'导出交易日志'
+          }).then(function(){
+            showToast('✓ 导出成功\n含 '+r.length+' 条记录 + '+imgCount+' 组图片\n\n请选择"存储到文件" → "iCloud云盘"或"我的iPhone"');
+          }).catch(function(err){
+            if(err.name!=='AbortError'){
+              console.error('分享失败:',err);
+              // Fallback: 提示用户手动操作
+              showToast('⚠ 自动保存失败\n\n请长按下方链接选择"下载链接文件"\n然后选择保存位置');
+              // 创建一个可下载的链接供用户手动操作
+              createManualDownloadLink(blob, filename);
+            }
+          });
+        }else{
+          // 浏览器不支持文件分享
+          showToast('⚠ 当前浏览器不支持文件分享\n\n建议使用Safari浏览器\n或将网页"添加到主屏幕"后使用');
+          createManualDownloadLink(blob, filename);
+        }
       }else{
-        // 没有Share API，使用传统方式
-        dlFallback(blob,filename,images,r);
+        // 不支持Web Share API
+        showToast('⚠ 请使用Safari浏览器\n\n或将网页"添加到主屏幕"');
+        createManualDownloadLink(blob, filename);
       }
     }else{
-      // 非iOS设备，使用传统下载
+      // 非iOS设备
       dl(blob,filename);
-      var imgCount=Object.keys(images).length;
       showToast('JSON 已下载\n含 '+r.length+' 条记录 + '+imgCount+' 组图片 ✓');
     }
   }).catch(function(err) {
@@ -1185,10 +1195,21 @@ function exportJSON(){
   });
 }
 
-function dlFallback(blob,filename,images,records){
-  dl(blob,filename);
-  var imgCount=Object.keys(images).length;
-  showToast('JSON 已下载\n含 '+records.length+' 条记录 + '+imgCount+' 组图片 ✓\n\n如无法保存，请使用浏览器"添加到主屏幕"功能');
+// 创建手动下载链接（iOS fallback）
+function createManualDownloadLink(blob, filename){
+  var url = URL.createObjectURL(blob);
+  var existingLink = document.getElementById('manual-download-link');
+  if(existingLink) existingLink.remove();
+  
+  var linkDiv = document.createElement('div');
+  linkDiv.id = 'manual-download-link';
+  linkDiv.style.cssText = 'position:fixed;bottom:calc(100px + var(--sb));left:50%;transform:translateX(-50%);background:var(--accent);color:white;padding:12px 24px;border-radius:12px;z-index:700;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.3);max-width:90vw;';
+  linkDiv.innerHTML = '<div style="font-size:13px;margin-bottom:8px;">长按下方链接保存文件</div><a href="'+url+'" download="'+filename+'" style="color:white;text-decoration:underline;font-weight:600;font-size:15px;">'+filename+'</a><div style="margin-top:8px;font-size:12px;opacity:0.8;" onclick="this.parentElement.remove()">点击关闭</div>';
+  document.body.appendChild(linkDiv);
+  
+  setTimeout(function(){
+    URL.revokeObjectURL(url);
+  }, 300000); // 5分钟后释放URL
 }
 
 function importJSON(input){
@@ -1286,19 +1307,9 @@ function dl(blob,name){
   var a=document.createElement('a');
   a.href=u;
   a.download=name;
-  
-  // iOS Safari兼容性处理
-  if(/iPhone|iPad|iPod/i.test(navigator.userAgent)){
-    // iOS设备上，使用window.open在新标签页打开，然后提示用户手动保存
-    a.target='_blank';
-    a.rel='noopener noreferrer';
-  }
-  
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  
-  // 延迟释放URL，确保下载完成
   setTimeout(function(){URL.revokeObjectURL(u);},100);
 }
 function now(){return new Date().toISOString().split('T')[0];}
