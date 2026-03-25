@@ -1,4 +1,4 @@
-const CACHE = 'piptrace-v1';
+const CACHE = 'piptrace-v2';
 const ASSETS = ['./', './index.html', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -14,15 +14,30 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(res => {
-        if (!res || res.status !== 200 || res.type !== 'basic') return res;
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-        return res;
-      }).catch(() => caches.match('./index.html'));
-    })
-  );
+  const req = e.request;
+  const isDoc = req.mode === 'navigate' || req.destination === 'document';
+
+  if (isDoc) {
+    e.respondWith(
+      fetch(req)
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put('./index.html', clone));
+          return res;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+  } else {
+    e.respondWith(
+      caches.match(req).then(cached => {
+        if (cached) return cached;
+        return fetch(req).then(res => {
+          if (!res || res.status !== 200 || res.type !== 'basic') return res;
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(req, clone));
+          return res;
+        }).catch(() => caches.match('./index.html'));
+      })
+    );
+  }
 });
