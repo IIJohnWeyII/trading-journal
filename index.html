@@ -452,6 +452,68 @@ var CRYPTO_MIN={BTC:0.001,ETH:0.01,SOL:0.1};
 var DEF_METHODS=['价格行为PA','突破回踩','支撑阻力','趋势跟随','OB订单块','FVG缺口','双顶/双底','均线交叉'];
 var DEF_TRIGGERS=['4H收线确认','回踩获支撑','成交量放大','突破关键位','K线形态确认','背离信号','EMA支撑'];
 
+// ── IndexedDB 图片存储模块 ──
+var imgDB = null;
+function initImgDB() {
+  return new Promise(function(resolve, reject) {
+    var req = indexedDB.open('TradingJournalImages', 1);
+    req.onerror = function() { reject(req.error); };
+    req.onsuccess = function() { imgDB = req.result; resolve(imgDB); };
+    req.onupgradeneeded = function(e) {
+      var db = e.target.result;
+      if (!db.objectStoreNames.contains('images')) {
+        db.createObjectStore('images', { keyPath: 'key' });
+      }
+    };
+  });
+}
+
+function saveImgsToDB(recordId, type, imgs) {
+  if (!imgDB) return Promise.resolve();
+  var key = 'imgs_' + recordId + '_' + type;
+  return new Promise(function(resolve, reject) {
+    var tx = imgDB.transaction(['images'], 'readwrite');
+    var store = tx.objectStore('images');
+    store.put({ key: key, data: imgs });
+    tx.oncomplete = function() { resolve(); };
+    tx.onerror = function() { reject(tx.error); };
+  });
+}
+
+function loadImgsFromDB(recordId, type) {
+  if (!imgDB) return Promise.resolve([]);
+  var key = 'imgs_' + recordId + '_' + type;
+  return new Promise(function(resolve) {
+    var tx = imgDB.transaction(['images'], 'readonly');
+    var store = tx.objectStore('images');
+    var req = store.get(key);
+    req.onsuccess = function() {
+      resolve(req.result ? req.result.data : []);
+    };
+    req.onerror = function() { resolve([]); };
+  });
+}
+
+function deleteImgsFromDB(recordId) {
+  if (!imgDB) return Promise.resolve();
+  return Promise.all([
+    new Promise(function(resolve) {
+      var tx = imgDB.transaction(['images'], 'readwrite');
+      var store = tx.objectStore('images');
+      store.delete('imgs_' + recordId + '_entry');
+      tx.oncomplete = function() { resolve(); };
+      tx.onerror = function() { resolve(); };
+    }),
+    new Promise(function(resolve) {
+      var tx = imgDB.transaction(['images'], 'readwrite');
+      var store = tx.objectStore('images');
+      store.delete('imgs_' + recordId + '_review');
+      tx.oncomplete = function() { resolve(); };
+      tx.onerror = function() { resolve(); };
+    })
+  ]);
+}
+
 function G(id){return document.getElementById(id);}
 function T(id,v){G(id).textContent=v;}
 
@@ -467,11 +529,61 @@ function init(){
   var d=new Date();
   G('hdr-date').textContent=d.toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'short'});
   G('e-date').value=d.toISOString().split('T')[0];
-  loadSettings();
-  renderMethodTags();renderTriggerTags();
-  renderImgGrid('entry');renderImgGrid('review');
-  checkPending();
+  
+  // 初始化IndexedDB并迁移旧数据
+  initImgDB().then(function() {
+    return migrateOldData();
+  }).then(function() {
+    loadSettings();
+    renderMethodTags();renderTriggerTags();
+    renderImgGrid('entry');renderImgGrid('review');
+    checkPending();
+  }).catch(function(err) {
+    console.error('IndexedDB初始化失败:', err);
+    loadSettings();
+    renderMethodTags();renderTriggerTags();
+    renderImgGrid('entry');renderImgGrid('review');
+    checkPending();
+  });
+  
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+
+// 迁移旧数据：将localStorage中的图片移到IndexedDB
+function migrateOldData() {
+  var records = getRecords();
+  var migrations = [];
+  var migrated = 0;
+  
+  records.forEach(function(r) {
+    // 如果记录里有entryImgs或reviewImgs字段，说明是旧数据
+    if (r.entryImgs && r.entryImgs.length > 0) {
+      migrations.push(
+        saveImgsToDB(r.id, 'entry', r.entryImgs).then(function() {
+          delete r.entryImgs; // 从记录中删除图片数据
+          migrated++;
+        })
+      );
+    }
+    if (r.reviewImgs && r.reviewImgs.length > 0) {
+      migrations.push(
+        saveImgsToDB(r.id, 'review', r.reviewImgs).then(function() {
+          delete r.reviewImgs;
+          migrated++;
+        })
+      );
+    }
+  });
+  
+  if (migrations.length > 0) {
+    return Promise.all(migrations).then(function() {
+      saveRecords(records); // 保存清理后的记录
+      if (migrated > 0) {
+        showToast('已自动迁移 ' + migrated + ' 组图片到新存储\nlocalStorage空间已释放 ✓');
+      }
+    });
+  }
+  return Promise.resolve();
 }
 
 // ── Tabs ──
@@ -724,10 +836,13 @@ function saveEntry(){
       rec.slDisplay=G('c-sl').textContent;rec.tpDisplay=G('c-tp').textContent;
       rec.posDisplay=G('c-pos').textContent;rec.slDist=G('c-sl-d').textContent;
       rec.method=getV('e-method');rec.trigger=getV('e-trigger');
-      rec.entryImgs=entryImgs.slice();
-      saveRecords(records);
-      showToast('入场记录已更新 ✓');
-      cancelEntryEdit();return;
+      // 图片存IndexedDB，记录不含图片
+      saveImgsToDB(editingEntryId, 'entry', entryImgs).then(function() {
+        saveRecords(records);
+        showToast('入场记录已更新 ✓');
+        cancelEntryEdit();
+      });
+      return;
     }
   }
 
@@ -740,17 +855,23 @@ function saveEntry(){
     slDisplay:G('c-sl').textContent,tpDisplay:G('c-tp').textContent,
     posDisplay:G('c-pos').textContent,slDist:G('c-sl-d').textContent,
     method:getV('e-method'),trigger:getV('e-trigger'),
-    entryImgs:entryImgs.slice(),reviewImgs:[],
+    // 不再存entryImgs/reviewImgs字段
     status:'open',result:'',exit:'',pnl:'',diff:'',lesson:'',emo:'',
     savedAt:new Date().toISOString()
   };
-  records.unshift(rec);saveRecords(records);
-  var dt=dirState==='long'?'做多':'做空',pl=G('c-pos-lbl').textContent;
-  copyText('【入场记录】'+rec.date+'\n品种：'+rec.asset+'　方向：'+dt+'　周期：'+rec.tf+'\n入场：'+rec.entry+'　止损价：'+rec.slDisplay+'　目标价：'+rec.tpDisplay+'\n止损距离：'+rec.slDist+'　最大亏损：'+(rec.maxloss||'—')+'\n'+pl+'：'+rec.posDisplay+'\n方法：'+(rec.method||'—')+'\n触发：'+(rec.trigger||'—'));
-  showToast('已保存并复制 ✓');checkPending();
-  selMethods=[];selTriggers=[];entryImgs=[];
-  renderMethodTags();renderTriggerTags();renderImgGrid('entry');
-  G('e-method').value='';G('e-trigger').value='';
+  
+  // 先存图片到IndexedDB，再存记录到localStorage
+  saveImgsToDB(rec.id, 'entry', entryImgs).then(function() {
+    records.unshift(rec);
+    saveRecords(records);
+    var dt=dirState==='long'?'做多':'做空',pl=G('c-pos-lbl').textContent;
+    copyText('【入场记录】'+rec.date+'\n品种：'+rec.asset+'　方向：'+dt+'　周期：'+rec.tf+'\n入场：'+rec.entry+'　止损价：'+rec.slDisplay+'　目标价：'+rec.tpDisplay+'\n止损距离：'+rec.slDist+'　最大亏损：'+(rec.maxloss||'—')+'\n'+pl+'：'+rec.posDisplay+'\n方法：'+(rec.method||'—')+'\n触发：'+(rec.trigger||'—'));
+    showToast('已保存并复制 ✓');
+    checkPending();
+    selMethods=[];selTriggers=[];entryImgs=[];
+    renderMethodTags();renderTriggerTags();renderImgGrid('entry');
+    G('e-method').value='';G('e-trigger').value='';
+  });
 }
 
 function cancelEntryEdit(){
@@ -771,16 +892,20 @@ function saveReview(){
   target.result=resState;target.exit=getV('r-exit');target.pnl=getV('r-pnl');
   target.diff=getV('r-diff');target.lesson=getV('r-lesson');
   target.emo=G('r-emo').value;target.status=resState||'open';
-  target.reviewImgs=reviewImgs.slice();
-  saveRecords(records);
-  var dt=target.dir==='long'?'做多':'做空',rm={win:'盈利',loss:'亏损',flat:'保本/小亏'};
-  copyText('【完整交易记录】'+target.date+'\n品种：'+target.asset+'　方向：'+dt+'　周期：'+target.tf+'\n入场：'+target.entry+'　止损价：'+target.slDisplay+'　目标价：'+target.tpDisplay+'\n─────\n结果：'+(rm[resState]||'—')+'\n出场：'+(target.exit||'—')+'　盈亏：'+(target.pnl||'—')+'\n差异：'+(target.diff||'—')+'\n下次：'+(target.lesson||'—')+'\n情绪：'+target.emo+'/10');
-  reviewTargetId=null;reviewImgs=[];
-  G('review-target-info').style.display='none';
-  G('review-edit-bar').classList.remove('show');
-  G('review-save-btn').textContent='保存复盘记录';
-  renderImgGrid('review');
-  showToast('复盘已保存并复制 ✓');checkPending();
+  
+  // 图片存IndexedDB，记录不含图片
+  saveImgsToDB(target.id, 'review', reviewImgs).then(function() {
+    saveRecords(records);
+    var dt=target.dir==='long'?'做多':'做空',rm={win:'盈利',loss:'亏损',flat:'保本/小亏'};
+    copyText('【完整交易记录】'+target.date+'\n品种：'+target.asset+'　方向：'+dt+'　周期：'+target.tf+'\n入场：'+target.entry+'　止损价：'+target.slDisplay+'　目标价：'+target.tpDisplay+'\n─────\n结果：'+(rm[resState]||'—')+'\n出场：'+(target.exit||'—')+'　盈亏：'+(target.pnl||'—')+'\n差异：'+(target.diff||'—')+'\n下次：'+(target.lesson||'—')+'\n情绪：'+target.emo+'/10');
+    reviewTargetId=null;reviewImgs=[];
+    G('review-target-info').style.display='none';
+    G('review-edit-bar').classList.remove('show');
+    G('review-save-btn').textContent='保存复盘记录';
+    renderImgGrid('review');
+    showToast('复盘已保存并复制 ✓');
+    checkPending();
+  });
 }
 
 function cancelReviewEdit(){
@@ -818,13 +943,29 @@ function renderHistory(){
     var triggerTags=(r.trigger||'').split('、').filter(Boolean).map(function(t){return '<span class="hi-tag trigger">'+t+'</span>';}).join('');
     var tagsHtml=(methodTags||triggerTags)?'<div class="hi-tags">'+methodTags+triggerTags+'</div>':'';
 
-    // Entry images
-    var entImgs=(r.entryImgs||[]);
-    var thumbsHtml=entImgs.length?'<div class="hi-thumbs">'+entImgs.slice(0,4).map(function(src,idx){return '<img class="hi-thumb" src="'+src+'" onclick="openLbFromHistory(event,'+r.id+',\'entry\','+idx+')">';}).join('')+(entImgs.length>4?'<span style="font-size:12px;color:var(--t3);align-self:center">+'+(entImgs.length-4)+'</span>':'')+'</div>':'';
-
-    // Review images
-    var revImgs=(r.reviewImgs||[]);
-    var revThumbsHtml=revImgs.length?'<div class="hi-thumbs">'+revImgs.slice(0,4).map(function(src,idx){return '<img class="hi-thumb" src="'+src+'" onclick="openLbFromHistory(event,'+r.id+',\'review\','+idx+')">';}).join('')+(revImgs.length>4?'<span style="font-size:12px;color:var(--t3);align-self:center">+'+(revImgs.length-4)+'</span>':'')+'</div>':'';
+    // Entry/Review images placeholders (will load async)
+    var thumbsHtml='<div class="hi-thumbs" id="hi-entry-'+r.id+'"></div>';
+    var revThumbsHtml='<div class="hi-thumbs" id="hi-review-'+r.id+'"></div>';
+    
+    // Async load images from IndexedDB
+    (function(recordId) {
+      loadImgsFromDB(recordId, 'entry').then(function(imgs) {
+        var container = G('hi-entry-' + recordId);
+        if (container && imgs.length > 0) {
+          container.innerHTML = imgs.slice(0,4).map(function(src,idx){
+            return '<img class="hi-thumb" src="'+src+'" onclick="openLbFromHistory(event,'+recordId+',\'entry\','+idx+')">';
+          }).join('') + (imgs.length>4?'<span style="font-size:12px;color:var(--t3);align-self:center">+'+(imgs.length-4)+'</span>':'');
+        }
+      });
+      loadImgsFromDB(recordId, 'review').then(function(imgs) {
+        var container = G('hi-review-' + recordId);
+        if (container && imgs.length > 0) {
+          container.innerHTML = imgs.slice(0,4).map(function(src,idx){
+            return '<img class="hi-thumb" src="'+src+'" onclick="openLbFromHistory(event,'+recordId+',\'review\','+idx+')">';
+          }).join('') + (imgs.length>4?'<span style="font-size:12px;color:var(--t3);align-self:center">+'+(imgs.length-4)+'</span>':'');
+        }
+      });
+    })(r.id);
 
     // Review notes
     var noteHtml='';
@@ -878,42 +1019,45 @@ function toggleHiDetail(id){
 // Open lightbox from history card
 function openLbFromHistory(e,id,which,idx){
   e.stopPropagation();
-  var records=getRecords(),r=records.find(function(x){return x.id===id;});
-  if(!r)return;
-  var imgs=which==='entry'?(r.entryImgs||[]):(r.reviewImgs||[]);
-  if(!imgs.length)return;
-  // Temporarily set lightbox images
-  lbWhich='_history_'+id+'_'+which;
-  lbHistoryImgs=imgs;
-  lbIdx=idx;
-  var track=G('lb-track');
-  track.innerHTML=imgs.map(function(src){return '<div class="lb-slide"><img src="'+src+'"/></div>';}).join('');
-  track.style.transition='none';
-  track.style.transform='translateX(-'+idx+'00%)';
-  G('lb-counter').textContent=(idx+1)+' / '+imgs.length;
-  G('lightbox').classList.add('open');
-  document.body.style.overflow='hidden';
-  var lb=G('lightbox');
-  lb.addEventListener('touchstart',lbTouchStart,{passive:true});
-  lb.addEventListener('touchend',lbTouchEnd,{passive:true});
+  // 从IndexedDB异步加载图片
+  loadImgsFromDB(id, which).then(function(imgs) {
+    if(!imgs.length) return;
+    lbWhich='_history_'+id+'_'+which;
+    lbHistoryImgs=imgs;
+    lbIdx=idx;
+    var track=G('lb-track');
+    track.innerHTML=imgs.map(function(src){return '<div class="lb-slide"><img src="'+src+'"/></div>';}).join('');
+    track.style.transition='none';
+    track.style.transform='translateX(-'+idx+'00%)';
+    G('lb-counter').textContent=(idx+1)+' / '+imgs.length;
+    G('lightbox').classList.add('open');
+    document.body.style.overflow='hidden';
+    var lb=G('lightbox');
+    lb.addEventListener('touchstart',lbTouchStart,{passive:true});
+    lb.addEventListener('touchend',lbTouchEnd,{passive:true});
+  });
 }
 
 function openEditEntry(id){
   var records=getRecords(),r=records.find(function(x){return x.id===id;});
   if(!r)return;
   editingEntryId=id;
-  // Fill entry fields
   G('e-asset').value=r.asset||'';onAssetChange();
-  G('e-tf').value=r.tf||'';
-  G('e-date').value=r.date||'';
+  G('e-tf').value=r.tf||'';G('e-date').value=r.date||'';
   dirState=r.dir||'';
   G('dir-long').className='dc'+(r.dir==='long'?' la':'');
   G('dir-short').className='dc'+(r.dir==='short'?' sa':'');
   G('e-entry').value=r.entry||'';G('e-slprice').value=r.slprice||'';
   G('e-maxloss').value=r.maxloss||'';G('e-lev').value=r.lev||'';G('e-rr').value=r.rr||'';
   G('e-method').value=r.method||'';G('e-trigger').value=r.trigger||'';
-  entryImgs=(r.entryImgs||[]).slice();
-  renderImgGrid('entry');calc();
+  
+  // 从IndexedDB异步加载图片（兼容旧数据）
+  loadImgsFromDB(id, 'entry').then(function(imgs) {
+    entryImgs = imgs.length > 0 ? imgs : (r.entryImgs || []);
+    renderImgGrid('entry');
+  });
+  
+  calc();
   G('entry-edit-bar').classList.add('show');
   G('entry-save-btn').textContent='更新入场记录';
   G('pending-notice').style.display='none';
@@ -925,17 +1069,20 @@ function openReview(id){
   var records=getRecords(),r=records.find(function(x){return x.id===id;});
   if(!r)return;
   reviewTargetId=id;
-  // Pre-fill entry data for calcExit
   G('e-entry').value=r.entry||'';G('e-slprice').value=r.slprice||'';
   G('e-maxloss').value=r.maxloss||'';G('e-lev').value=r.lev||'';G('e-rr').value=r.rr||'';
   dirState=r.dir||'';
-  // Fill review fields
   setRes(r.result||'');
   G('r-exit').value=r.exit||'';G('r-pnl').value=r.pnl||'';
   G('r-diff').value=r.diff||'';G('r-lesson').value=r.lesson||'';
   if(r.emo){G('r-emo').value=r.emo;updateEmo(r.emo);}
-  reviewImgs=(r.reviewImgs||[]).slice();
-  renderImgGrid('review');
+  
+  // 从IndexedDB异步加载图片（兼容旧数据）
+  loadImgsFromDB(id, 'review').then(function(imgs) {
+    reviewImgs = imgs.length > 0 ? imgs : (r.reviewImgs || []);
+    renderImgGrid('review');
+  });
+  
   var dt=r.dir==='long'?'做多':'做空';
   G('review-target-label').textContent=r.asset+' '+dt+' '+r.date;
   G('review-target-info').style.display='block';
@@ -966,16 +1113,49 @@ function exportExcel(){
 }
 function exportJSON(){
   var r=getRecords();
-  var data={
-    version:2,
-    exportedAt:new Date().toISOString(),
-    records:r,
-    methods:getTags('method'),
-    triggers:getTags('trigger'),
-    settings:JSON.parse(localStorage.getItem('tj_settings')||'{}')
-  };
-  dl(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'交易日志_'+now()+'.json');
-  showToast('JSON 已下载（含标签和设置）');
+  showToast('正在导出，请稍候...');
+  
+  // 收集所有图片数据
+  var imgPromises = [];
+  r.forEach(function(rec) {
+    imgPromises.push(
+      loadImgsFromDB(rec.id, 'entry').then(function(imgs) {
+        return { id: rec.id, type: 'entry', imgs: imgs };
+      })
+    );
+    imgPromises.push(
+      loadImgsFromDB(rec.id, 'review').then(function(imgs) {
+        return { id: rec.id, type: 'review', imgs: imgs };
+      })
+    );
+  });
+  
+  Promise.all(imgPromises).then(function(results) {
+    // 将图片数据打包进JSON
+    var images = {};
+    results.forEach(function(item) {
+      if (item.imgs && item.imgs.length > 0) {
+        var key = item.id + '_' + item.type;
+        images[key] = item.imgs;
+      }
+    });
+    
+    var data={
+      version:3, // 版本升级到3，支持图片分离
+      exportedAt:new Date().toISOString(),
+      records:r,
+      images:images, // 新增图片数据
+      methods:getTags('method'),
+      triggers:getTags('trigger'),
+      settings:JSON.parse(localStorage.getItem('tj_settings')||'{}')
+    };
+    dl(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'交易日志_'+now()+'.json');
+    var imgCount = Object.keys(images).length;
+    showToast('JSON 已下载\n含 ' + r.length + ' 条记录 + ' + imgCount + ' 组图片 ✓');
+  }).catch(function(err) {
+    console.error('导出失败:', err);
+    showToast('导出失败，请重试');
+  });
 }
 
 function importJSON(input){
@@ -984,16 +1164,18 @@ function importJSON(input){
   reader.onload=function(e){
     try{
       var parsed=JSON.parse(e.target.result);
+      showToast('正在导入，请稍候...');
 
       // Support both old format (plain array) and new format
-      var data, methods, triggers, settings;
+      var data, methods, triggers, settings, images;
       if(Array.isArray(parsed)){
-        data=parsed; methods=null; triggers=null; settings=null;
+        data=parsed; methods=null; triggers=null; settings=null; images=null;
       } else {
         data=parsed.records||[];
         methods=parsed.methods||null;
         triggers=parsed.triggers||null;
         settings=parsed.settings||null;
+        images=parsed.images||null; // 新增：图片数据
       }
 
       if(!Array.isArray(data)){showToast('文件格式错误，请选择正确的备份文件');return;}
@@ -1006,33 +1188,60 @@ function importJSON(input){
       merged.sort(function(a,b){return b.id-a.id;});
       saveRecords(merged);
 
-      // Merge tags (combine, deduplicate)
-      var tagMsg='';
-      if(methods){
-        var curM=getTags('method');
-        var mergedM=curM.concat(methods.filter(function(t){return curM.indexOf(t)===-1;}));
-        saveTags('method',mergedM);
-        tagMsg+=' 方法标签 '+mergedM.length+' 个';
-      }
-      if(triggers){
-        var curT=getTags('trigger');
-        var mergedT=curT.concat(triggers.filter(function(t){return curT.indexOf(t)===-1;}));
-        saveTags('trigger',mergedT);
-        tagMsg+=' 触发标签 '+mergedT.length+' 个';
-      }
-
-      // Restore settings (overwrite — these are personal preferences)
-      var settingsMsg='';
-      if(settings&&(settings.rr||settings.lev)){
-        localStorage.setItem('tj_settings',JSON.stringify(settings));
-        loadSettings(); // refresh UI inputs
-        settingsMsg=' 设置已恢复';
+      // 导入图片到IndexedDB
+      var imgPromises = [];
+      var imgCount = 0;
+      if (images) {
+        Object.keys(images).forEach(function(key) {
+          // key格式: "recordId_type"
+          var parts = key.split('_');
+          var recordId = parseInt(parts[0]);
+          var type = parts[1];
+          if (images[key] && images[key].length > 0) {
+            imgPromises.push(
+              saveImgsToDB(recordId, type, images[key]).then(function() {
+                imgCount++;
+              })
+            );
+          }
+        });
       }
 
-      renderHistory();checkPending();
-      renderMethodTags();renderTriggerTags();
-      showToast('导入成功\n记录新增 '+newRecords.length+' 条，共 '+merged.length+' 条'+(tagMsg?'\n'+tagMsg:'')+(settingsMsg?'\n'+settingsMsg:''));
+      // 等待图片导入完成后再显示结果
+      Promise.all(imgPromises).then(function() {
+        // Merge tags (combine, deduplicate)
+        var tagMsg='';
+        if(methods){
+          var curM=getTags('method');
+          var mergedM=curM.concat(methods.filter(function(t){return curM.indexOf(t)===-1;}));
+          saveTags('method',mergedM);
+          tagMsg+=' 方法标签 '+mergedM.length+' 个';
+        }
+        if(triggers){
+          var curT=getTags('trigger');
+          var mergedT=curT.concat(triggers.filter(function(t){return curT.indexOf(t)===-1;}));
+          saveTags('trigger',mergedT);
+          tagMsg+=' 触发标签 '+mergedT.length+' 个';
+        }
+
+        // Restore settings (overwrite — these are personal preferences)
+        var settingsMsg='';
+        if(settings&&(settings.rr||settings.lev)){
+          localStorage.setItem('tj_settings',JSON.stringify(settings));
+          loadSettings(); // refresh UI inputs
+          settingsMsg=' 设置已恢复';
+        }
+
+        renderHistory();checkPending();
+        renderMethodTags();renderTriggerTags();
+        var imgMsg = imgCount > 0 ? '\n图片 ' + imgCount + ' 组' : '';
+        showToast('导入成功 ✓\n记录新增 '+newRecords.length+' 条，共 '+merged.length+' 条'+(imgMsg)+(tagMsg?'\n'+tagMsg:'')+(settingsMsg?'\n'+settingsMsg:''));
+      }).catch(function(err) {
+        console.error('图片导入失败:', err);
+        showToast('记录导入成功，但图片导入失败\n请检查浏览器兼容性');
+      });
     }catch(err){
+      console.error('导入失败:', err);
       showToast('导入失败，文件格式不正确');
     }
     input.value='';
