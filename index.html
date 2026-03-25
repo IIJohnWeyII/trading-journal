@@ -1153,35 +1153,22 @@ function exportJSON(){
     var jsonStr=JSON.stringify(data,null,2);
     var imgCount=Object.keys(images).length;
     
-    // iOS设备：强制使用Web Share API
+    // iOS设备：使用标准下载+引导
     if(navigator.userAgent.match(/iPhone|iPad|iPod/i)){
-      if(navigator.share && navigator.canShare){
-        // 直接创建File对象，不创建Blob
-        var file=new File([jsonStr],filename,{type:'application/json'});
-        // 检查是否可以分享文件
-        if(navigator.canShare({files:[file]})){
-          navigator.share({
-            files:[file],
-            title:'导出交易日志'
-          }).then(function(){
-            showToast('✓ 导出成功\n含 '+r.length+' 条记录 + '+imgCount+' 组图片\n\n请在分享菜单中选择\n"存储到文件" → "iCloud云盘"或"我的iPhone"');
-          }).catch(function(err){
-            if(err.name!=='AbortError'){
-              console.error('分享失败:',err);
-              showToast('⚠ 分享失败\n\n建议使用Safari浏览器\n或将网页"添加到主屏幕"后重试');
-            }
-          });
-          return; // 重要：成功调用share后直接返回
-        }else{
-          // 浏览器不支持文件分享
-          showToast('⚠ 当前浏览器不支持文件分享\n\n建议使用Safari浏览器\n或将网页"添加到主屏幕"后使用');
-        }
-      }else{
-        // 不支持Web Share API
-        showToast('⚠ 请使用Safari浏览器\n\n或将网页"添加到主屏幕"');
-      }
-      // iOS设备上，如果Share API失败，则不执行任何下载操作
-      return;
+      var blob=new Blob([jsonStr],{type:'application/json'});
+      // 使用标准下载方式
+      var u=URL.createObjectURL(blob);
+      var a=document.createElement('a');
+      a.href=u;
+      a.download=filename;
+      a.target='_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(u);},100);
+      
+      // 显示详细的保存指引
+      showToast('✓ 导出成功！\n含 '+r.length+' 条记录 + '+imgCount+' 组图片\n\n文件已下载，请按以下步骤保存：\n1. 点击浏览器的"下载"按钮\n2. 找到文件后长按\n3. 选择"存储到文件"\n4. 选择"iCloud云盘"或"我的iPhone"');
     }else{
       // 非iOS设备：使用传统下载
       var blob=new Blob([jsonStr],{type:'application/json'});
@@ -1289,6 +1276,7 @@ function dl(blob,name){
   var a=document.createElement('a');
   a.href=u;
   a.download=name;
+  a.target='_blank'; // iOS兼容性：在新标签页打开
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
